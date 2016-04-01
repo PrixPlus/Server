@@ -3,11 +3,15 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+    "os"
 	)
 
 func main() {
+
+    prixpath := os.Getenv("GOPATH")+"/src/github.com/prixplus/server/"
+
     r := gin.Default()
-    r.LoadHTMLGlob("templates/*")
+    r.LoadHTMLGlob(prixpath+"templates/*")
     r.Static("/assets", "./assets")
     //r.StaticFS("/more_static", http.Dir("my_file_system"))
     r.StaticFile("/favicon.ico", "./resources/favicon.ico")
