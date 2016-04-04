@@ -17,12 +17,6 @@ const (
 
 var secretKey = []byte("7hE Pr!x V3ry 53CRE7 K3Y 7h47 nO0N3 kN0w5!")
 
-// Login form structure.
-type Login struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
 // LoginHandler can be used by clients to get a jwt token.
 // Payload needs to be json in the form of {"email": "EMAIL@EMAIL", "password": "PASSWORD"}.
 // Reply will be of the form {"token": "TOKEN"}.
@@ -30,17 +24,25 @@ func LoginHandler(db *sql.DB) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
-		var login Login
+		var login User
+		c.Error(errors.New("TESTING"))
+		c.Error(errors.New("Fucking shit"))
 
-		if err := c.BindJSON(&login); err != nil {
-			unauthorized(c, http.StatusBadRequest, "Something goes wrong: "+err.Error())
+		err := c.BindJSON(&login)
+		if err != nil {
+			//unauthorized(c, http.StatusBadRequest, "Something goes wrong: "+err.Error())
+
+			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
 		if len(login.Email) == 0 || len(login.Password) == 0 {
-			unauthorized(c, http.StatusBadRequest, "Email or Password can not be empty")
+			c.AbortWithError(http.StatusBadRequest, errors.New("Email or Password can not be empty"))
+
 			return
 		}
+
+		panic("FUCK U")
 
 		// One transation just to get the user? Lol...
 		// It's because the method User.Get() requires an transation
@@ -50,8 +52,8 @@ func LoginHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		u := User{Email: login.Email, Password: login.Password}
-		err = u.Get(tx)
+		user := User{Email: login.Email, Password: login.Password}
+		err = user.Get(tx)
 		if err != nil {
 			unauthorized(c, http.StatusBadRequest, "Something goes wrong: "+err.Error())
 			return
@@ -70,14 +72,14 @@ func LoginHandler(db *sql.DB) gin.HandlerFunc {
 		// not used because UserName is alread fine at this momment
 		/*
 			if mw.PayloadFunc != nil {
-				for key, value := range PayloadFunc(u.UserName) {
+				for key, value := range PayloadFunc(user.UserName) {
 					token.Claims[key] = value
 				}
 			}
 		*/
 
 		expire := time.Now().Add(timeout)
-		token.Claims["username"] = u.UserName
+		token.Claims["username"] = user.UserName
 		token.Claims["exp"] = expire.Unix()
 
 		// I could use some key id to identify whay secret key are we using
@@ -97,6 +99,7 @@ func LoginHandler(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+// Apply for private routes
 func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 
 	return func(c *gin.Context) {

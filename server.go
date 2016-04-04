@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func HelloHandler(c *gin.Context) {
@@ -28,6 +29,13 @@ func main() {
 		port = "8080"
 	}
 
+	// If var $MODE is set to RELEASE,
+	// than starts server in release mode
+	mode := strings.ToLower(os.Getenv("MODE"))
+	if mode == "release" && gin.IsDebugging() {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	// Init DB connection
 	db, err := InitDB()
 	if err != nil {
@@ -40,6 +48,7 @@ func main() {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	r.Use(RecoveryMiddleware(db))
 
 	r.LoadHTMLGlob(prixpath + "templates/*")
 	r.Static("/assets", "./assets")
@@ -72,6 +81,9 @@ func main() {
 		auth.GET("/hello", HelloHandler)
 
 	}
+
+	// Logging the mode server is starting
+	log.Printf("Server starting in %s mode", gin.Mode())
 
 	// Manners allows you to shut your Go webserver down gracefully, without dropping any requests
 	manners.ListenAndServe(":"+port, r)
