@@ -1,4 +1,4 @@
-package main
+package model
 
 import (
 	"database/sql"
@@ -111,13 +111,13 @@ func (u *User) Get(tx *sql.Tx) error {
 	} else {
 		// User not found, clear the reference
 		*u = User{}
-		return ErrElemNotFound
+		return errors.New("Element not found")
 	}
 
 	// Check if this Elem returned is not unique
 	if rows.Next() {
 		*u = User{}
-		return ErrElemNotUnique
+		return errors.New("Element not unique")
 	}
 
 	err = rows.Err()

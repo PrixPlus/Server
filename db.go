@@ -2,9 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	_ "github.com/lib/pq"
+	"github.com/prixplus/server/models"
 )
 
 const (
@@ -13,11 +13,6 @@ const (
 	host     = "prix.plus"
 	dbname   = "prix"
 	sslmode  = "disable"
-)
-
-var (
-	ErrElemNotFound  = errors.New("Element not found")
-	ErrElemNotUnique = errors.New("Element not unique")
 )
 
 func createSchema(db *sql.DB) error {
@@ -61,13 +56,13 @@ func InitDB() (*sql.DB, error) {
 		return nil, err
 	}
 
-	z := User{UserName: "admin", Password: "pass", Email: "admin@admin"}
+	z := model.User{UserName: "admin", Password: "pass", Email: "admin@admin"}
 	err = z.Insert(tx)
 	if err != nil {
 		return nil, err
 	}
 
-	u := User{UserName: "Testing", Password: "pass", Email: "test@test"}
+	u := model.User{UserName: "Testing", Password: "pass", Email: "test@test"}
 	err = u.Insert(tx)
 	if err != nil {
 		return nil, err
@@ -80,7 +75,7 @@ func InitDB() (*sql.DB, error) {
 		return nil, err
 	}
 
-	a := User{Email: "admin@admin"}
+	a := model.User{Email: "admin@admin"}
 
 	err = a.Get(tx)
 	if err != nil {
