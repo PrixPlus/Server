@@ -5,7 +5,8 @@ Introduction to the API
 # API
 
 #### [GET] /
-- Return the index.html dub page.
+Return the index.html dub page.
+
 
 #### [GET] /api/ping
 This route is used to check the service status.
@@ -17,8 +18,9 @@ This route is used to check the service status.
 }
 ```
 
+
 #### [POST] /api/login
-This route um send an email and pass and receives a token to make authenticated calls to the api.
+This route is used to authenticate an user, it returns an valid token to make authenticated api calls.
 
 - Request:
 ```javascript
@@ -40,7 +42,7 @@ This route um send an email and pass and receives a token to make authenticated 
 #### [GET] /api/refresh_token
 This route is used to refresh a valid token.
 
-- Requires Header: `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjMyOTA5ODcsImlkIjoxfQ.ROZ9l2I41QE3Mz9jhJdLmqHAQpQr5SazzCU7q-8WSnk`
+- Request Header: `Authorization: Bearer TOKEN`
 
 - Return:
 ```javascript
@@ -50,10 +52,11 @@ This route is used to refresh a valid token.
 }
 ```
 
+
 #### [GET] /api/me
 This route is used to retrieve the current user in the session.
 
-- Requires Header: `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjMyOTA5ODcsImlkIjoxfQ.ROZ9l2I41QE3Mz9jhJdLmqHAQpQr5SazzCU7q-8WSnk`
+- Request Header: `Authorization: Bearer TOKEN`
 
 - Return:
 ```javascript
@@ -68,10 +71,11 @@ This route is used to retrieve the current user in the session.
 }
 ```
 
+
 #### [POST] /api/users
 This route is used to create a new user.
 
-- Requires Header: `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjMyOTA5ODcsImlkIjoxfQ.ROZ9l2I41QE3Mz9jhJdLmqHAQpQr5SazzCU7q-8WSnk`
+- Request Header: `Authorization: Bearer TOKEN`
 
 - Request:
 ```javascript
@@ -81,6 +85,7 @@ This route is used to create a new user.
 }
 ```
 
+- Return Header: `Location: /api/users/2`
 - Return:
 ```javascript
 {
@@ -95,10 +100,11 @@ This route is used to create a new user.
 }
 ```
 
+
 #### [PUT] /api/users/:id
 This route is used to update users info. You can't use an `id` differente from yours.
 
-- Requires Header: `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjMyOTA5ODcsImlkIjoxfQ.ROZ9l2I41QE3Mz9jhJdLmqHAQpQr5SazzCU7q-8WSnk`
+- Request Header: `Authorization: Bearer TOKEN`
 
 - Request:
 ```javascript
