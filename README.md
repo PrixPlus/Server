@@ -4,10 +4,12 @@ Introduction to the API
 
 # API
 
-### [GET] /
+#### [GET] /
 - Return the index.html dub page.
 
-### [GET] /api/ping
+#### [GET] /api/ping
+This route is used to check the service status.
+
 - Return:
 ```javascript
 {
@@ -15,7 +17,9 @@ Introduction to the API
 }
 ```
 
-### [POST] /api/login
+#### [POST] /api/login
+This route um send an email and pass and receives a token to make authenticated calls to the api.
+
 - Request:
 ```javascript
 {
@@ -33,7 +37,11 @@ Introduction to the API
 ```
 
 
-### [GET] /api/refresh_token
+#### [GET] /api/refresh_token
+This route is used to refresh a valid token.
+
+- Requires Header: `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjMyOTA5ODcsImlkIjoxfQ.ROZ9l2I41QE3Mz9jhJdLmqHAQpQr5SazzCU7q-8WSnk`
+
 - Return:
 ```javascript
 {
@@ -42,7 +50,11 @@ Introduction to the API
 }
 ```
 
-### [GET] /api/me
+#### [GET] /api/me
+This route is used to retrieve the current user in the session.
+
+- Requires Header: `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjMyOTA5ODcsImlkIjoxfQ.ROZ9l2I41QE3Mz9jhJdLmqHAQpQr5SazzCU7q-8WSnk`
+
 - Return:
 ```javascript
 {
@@ -56,7 +68,11 @@ Introduction to the API
 }
 ```
 
-### [POST] /api/users
+#### [POST] /api/users
+This route is used to create a new user.
+
+- Requires Header: `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjMyOTA5ODcsImlkIjoxfQ.ROZ9l2I41QE3Mz9jhJdLmqHAQpQr5SazzCU7q-8WSnk`
+
 - Request:
 ```javascript
 {
@@ -79,7 +95,11 @@ Introduction to the API
 }
 ```
 
-### [PUT] /api/users/:id
+#### [PUT] /api/users/:id
+This route is used to update users info. You can't use an `id` differente from yours.
+
+- Requires Header: `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjMyOTA5ODcsImlkIjoxfQ.ROZ9l2I41QE3Mz9jhJdLmqHAQpQr5SazzCU7q-8WSnk`
+
 - Request:
 ```javascript
 {
