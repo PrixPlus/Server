@@ -1,4 +1,4 @@
-package middlewares
+package middleware
 
 import (
 	"database/sql"
@@ -38,9 +38,7 @@ func Recovery(db *sql.DB) gin.HandlerFunc {
 			status := c.Writer.Status()
 
 			c.JSON(status, gin.H{
-				"status":      status,
-				"status_text": http.StatusText(status),
-				"messages":    c.Errors.Errors(),
+				"errors": c.Errors.Errors(),
 			})
 
 		}()

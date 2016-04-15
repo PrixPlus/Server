@@ -1,21 +1,22 @@
-package handlers
+package handler
 
 import (
 	"database/sql"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/prixplus/server/models"
+	"github.com/prixplus/server/model"
+	"log"
 	"net/http"
 	"time"
 )
 
 // Duplicate in Middleware and Handler
-// It should be in model Auth
+// It should be in model Auth ?
 const (
 	relm             = "Prix"
 	signingAlgorithm = "HS256"
-	timeout          = time.Hour
+	timeout          = time.Hour * 24 * 30 // Stay logged a month
 )
 
 var secretKey = []byte("7hE Pr!x V3ry 53CRE7 K3Y 7h47 nO0N3 kN0w5!")
@@ -27,68 +28,42 @@ func Login(db *sql.DB) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
-		var login model.User
+		var user model.User
 
-		// Testing Login Error Mesages!
-		c.Error(errors.New("Testing these cute error messages"))
-		c.Error(errors.New("I love it!"))
-
-		err := c.BindJSON(&login)
+		err := c.BindJSON(&user)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			c.AbortWithError(http.StatusInternalServerError, errors.New("Error parsing JSON: "+err.Error()))
 			return
 		}
 
-		if len(login.Email) == 0 || len(login.Password) == 0 {
+		if len(user.Email) == 0 || len(user.Password) == 0 {
 			c.AbortWithError(http.StatusBadRequest, errors.New("Email or Password can not be empty"))
 			return
 		}
 
-		// One transation just to get the user? Lol...
-		// It's because the method User.Get() requires an transation
-		tx, err := db.Begin()
+		u := model.User{Email: user.Email, Password: user.Password}
+		err = u.Get(db)
 		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
-
-		user := model.User{Email: login.Email, Password: login.Password}
-		err = user.Get(tx)
-		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
-
-		err = tx.Commit()
-		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
+			c.AbortWithError(http.StatusBadRequest, errors.New("Error getting user: "+err.Error()))
 			return
 		}
 
 		// Create the token
 		token := jwt.New(jwt.GetSigningMethod(signingAlgorithm))
 
-		// To add more data in token
-		// not used because UserName is alread fine at this momment
-		/*
-			if mw.PayloadFunc != nil {
-				for key, value := range PayloadFunc(user.UserName) {
-					token.Claims[key] = value
-				}
-			}
-		*/
+		log.Printf("### USER ID: %v\n", u.Id)
 
 		expire := time.Now().Add(timeout)
-		token.Claims["username"] = user.UserName
+		token.Claims["id"] = u.Id
 		token.Claims["exp"] = expire.Unix()
 
-		// I could use some key id to identify whay secret key are we using
+		// I could use some key id to identify what secret key are we using
 		// but it is optional and isn't utilized in this package
-		// token.Header["kid"] = "Identify My Secret Key Some Way"
+		// token.Header["kid"] = "Id of the Secret Key used to encrypt this token"
 
 		tokenString, err := token.SignedString(secretKey)
 		if err != nil {
-			c.AbortWithError(http.StatusUnauthorized, err)
+			c.AbortWithError(http.StatusUnauthorized, errors.New("Error creating new token: "+err.Error()))
 			return
 		}
 
@@ -104,26 +79,29 @@ func Login(db *sql.DB) gin.HandlerFunc {
 // Reply will be of the form {"token": "TOKEN"}.
 func Refresh(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userName, ok := c.Get("userName")
+		id, ok := c.Get("id")
 		if !ok {
 			c.AbortWithError(http.StatusUnauthorized, errors.New("User not logged"))
 			return
 		}
 
+		// Need to verify if this token still valid
+		// because an user could close this session intentionaly
+
 		// Create the token
 		newToken := jwt.New(jwt.GetSigningMethod(signingAlgorithm))
 
 		expire := time.Now().Add(timeout)
-		newToken.Claims["username"] = userName
+		newToken.Claims["id"] = id
 		newToken.Claims["exp"] = expire.Unix()
 
 		tokenString, err := newToken.SignedString(secretKey)
 		if err != nil {
-			c.AbortWithError(http.StatusUnauthorized, err)
+			c.AbortWithError(http.StatusUnauthorized, errors.New("Error creating new refresh token: "+err.Error()))
 			return
 		}
 
-		// Save Token refresh in DB
+		// Save Token refresh in DB...
 
 		c.JSON(http.StatusOK, gin.H{
 			"token":  tokenString,

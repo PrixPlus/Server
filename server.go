@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/braintree/manners"
 	"github.com/gin-gonic/gin"
-	"github.com/prixplus/server/routers"
+	"github.com/prixplus/server/router"
 	"log"
 	"os"
 	"strings"
@@ -23,7 +23,7 @@ func main() {
 		log.Fatal("Error initializing DB: ", err)
 	}
 
-	// Close DB when main returns
+	// Close DB when main() returns
 	defer db.Close()
 
 	// Logging the mode server is starting
