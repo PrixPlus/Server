@@ -19,8 +19,8 @@ func Init(db *sql.DB) *gin.Engine {
 
 	directory := os.Getenv("GOPATH") + "/src/github.com/prixplus/server/"
 	r.LoadHTMLGlob(directory + "templates/*")
-	r.StaticFile("/favicon.ico", "./assets/favicon.ico")
-	r.Static("/assets", "./assets")
+	r.StaticFile("/favicon.ico", directory+"assets/favicon.ico")
+	r.Static("/assets", directory+"assets")
 
 	// Main route
 	r.GET("/", func(c *gin.Context) {
