@@ -75,8 +75,6 @@ This route is used to retrieve the current user in the session.
 #### [POST] /api/users
 This route is used to create a new user.
 
-- Request Header: `Authorization: Bearer TOKEN`
-
 - Request:
 ```javascript
 {
