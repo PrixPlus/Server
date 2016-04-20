@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prixplus/server/database"
 	"github.com/prixplus/server/errs"
-	"github.com/prixplus/server/model"
+	"github.com/prixplus/server/models"
 	"github.com/prixplus/server/settings"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -32,7 +32,7 @@ func Login() gin.HandlerFunc {
 			log.Fatal("Error getting DB: ", err)
 		}
 
-		var login model.Login
+		var login models.Login
 
 		err = c.BindJSON(&login)
 		if err != nil {
@@ -45,7 +45,7 @@ func Login() gin.HandlerFunc {
 			return
 		}
 
-		u := model.User{Email: login.Email}
+		u := models.User{Email: login.Email}
 		err = u.Get(db)
 		if err == errs.ElementNotFound {
 			c.AbortWithError(errs.Status[err], errors.New("User not found!"))
@@ -96,7 +96,7 @@ func Login() gin.HandlerFunc {
 }
 
 // RefreshHandler can be used to refresh a token. The token still needs to be valid on refresh.
-// Shall be put under an endpoint that is using the AuthMiddleware.
+// Shall be put under an endpoint that is using the Authmiddlewares.
 // Reply will be of the form {"token": "TOKEN"}.
 func Refresh() gin.HandlerFunc {
 	return func(c *gin.Context) {

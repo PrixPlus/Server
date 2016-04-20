@@ -1,11 +1,11 @@
-package router
+package routers
 
 import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/prixplus/server/handler"
-	"github.com/prixplus/server/middleware"
+	"github.com/prixplus/server/handlers"
+	"github.com/prixplus/server/middlewares"
 	"github.com/prixplus/server/settings"
 )
 
@@ -20,8 +20,8 @@ func Init() *gin.Engine {
 
 	r := gin.New()
 	r.Use(gin.Logger())
-	r.Use(middleware.Recovery())
-	r.Use(middleware.Auth())
+	r.Use(middlewares.Recovery())
+	r.Use(middlewares.Auth())
 
 	r.LoadHTMLGlob(sets.Dir + "templates/*")
 	r.StaticFile("/favicon.ico", sets.Dir+"assets/favicon.ico")
@@ -44,15 +44,15 @@ func Init() *gin.Engine {
 			})
 		})
 
-		api.POST("/login", handler.Login())
-		api.GET("/refresh_token", handler.Refresh())
+		api.POST("/login", handlers.Login())
+		api.GET("/refresh_token", handlers.Refresh())
 
 		// Get user himself
-		api.GET("/me", handler.GetMe())
+		api.GET("/me", handlers.GetMe())
 		// Insert a new user
-		api.POST("/users", handler.PostUser())
+		api.POST("/users", handlers.PostUser())
 		// Update an new user
-		api.PUT("/users/:id", handler.PutUser())
+		api.PUT("/users/:id", handlers.PutUser())
 
 	}
 

@@ -1,4 +1,4 @@
-package middleware
+package middlewares
 
 import (
 	"errors"
@@ -28,7 +28,7 @@ func Recovery() gin.HandlerFunc {
 			// Ops, something goes wrong
 			// maybe bad request, or claims unauthorized...
 
-			log.Println("### Recovery Middleware ###")
+			log.Println("### Recovery middlewares ###")
 
 			if r != nil {
 				c.Error(errors.New(fmt.Sprintf("Panic! %s", r)))

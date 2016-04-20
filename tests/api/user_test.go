@@ -1,13 +1,14 @@
-package model
-
+package models
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"github.com/prixplus/server/handler"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/prixplus/server/routers"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFoo(t *testing.T) {
@@ -24,7 +25,6 @@ func TestFoo(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", "/foo", nil)
 	resp := httptest.NewRecorder()
-	router.Init(db).ServeHTTP(resp, req)
+	routers.Init(db).ServeHTTP(resp, req)
 	assert.Equal(t, resp.Body.String(), "bar")
 }
-

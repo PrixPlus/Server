@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/prixplus/server/model"
+	"github.com/prixplus/server/models"
 )
 
 // Create Dev Data
@@ -41,7 +41,7 @@ func createSchema(db *sql.DB) error {
 func populatingSchema(db *sql.DB) error {
 
 	// Adding Prixty user
-	u := model.User{Password: "123456", Email: "user@prix.plus"}
+	u := models.User{Password: "123456", Email: "user@prix.plus"}
 	err := u.Insert(db)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func populatingSchema(db *sql.DB) error {
 		return err
 	}
 
-	a2 := model.User{Email: "admin@admin"}
+	a2 := models.User{Email: "admin@admin"}
 
 	err = a2.Get(tx)
 	if err != nil {

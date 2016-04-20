@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prixplus/server/database"
-	"github.com/prixplus/server/model"
+	"github.com/prixplus/server/models"
 )
 
 // Get the User of the current session
@@ -30,7 +30,7 @@ func GetMe() gin.HandlerFunc {
 		}
 		uId := sessionId.(int64)
 
-		user := model.User{Id: uId}
+		user := models.User{Id: uId}
 		err = user.Get(db)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error getting users with your Id: "+err.Error()))
@@ -38,7 +38,7 @@ func GetMe() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"results": []model.User{user},
+			"results": []models.User{user},
 		})
 	}
 }
@@ -54,7 +54,7 @@ func PostUser() gin.HandlerFunc {
 			log.Fatal("Error getting DB: ", err)
 		}
 
-		var login model.Login
+		var login models.Login
 
 		err = c.BindJSON(&login)
 		if err != nil {
@@ -68,7 +68,7 @@ func PostUser() gin.HandlerFunc {
 		}
 
 		// Test if already exists an user with this email
-		u := model.User{Email: login.Email}
+		u := models.User{Email: login.Email}
 		users, err := u.GetAll(db)
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, errors.New("Error getting users with email "+login.Email+": "+err.Error()))
@@ -80,7 +80,7 @@ func PostUser() gin.HandlerFunc {
 			return
 		}
 
-		user := model.User{Email: login.Email, Password: login.Password}
+		user := models.User{Email: login.Email, Password: login.Password}
 		err = user.Insert(db)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error inserting your user: "+err.Error()))
@@ -91,7 +91,7 @@ func PostUser() gin.HandlerFunc {
 
 		c.JSON(http.StatusCreated, gin.H{
 			"location": fmt.Sprintf("/api/users/%d", user.Id),
-			"results":  []model.User{user},
+			"results":  []models.User{user},
 		})
 	}
 }
@@ -127,7 +127,7 @@ func PutUser() gin.HandlerFunc {
 		}
 
 		// Get info received in json
-		var user model.User
+		var user models.User
 
 		err = c.BindJSON(&user)
 		if err != nil {
@@ -135,7 +135,7 @@ func PutUser() gin.HandlerFunc {
 			return
 		}
 
-		u := model.User{Id: uId}
+		u := models.User{Id: uId}
 		err = u.Get(db)
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, errors.New("Error getting user: "+err.Error()))
@@ -170,7 +170,7 @@ func PutUser() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
-			"results": []model.User{user},
+			"results": []models.User{user},
 		})
 	}
 }

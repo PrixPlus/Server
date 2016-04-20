@@ -5,7 +5,7 @@ import (
 
 	"github.com/braintree/manners"
 	"github.com/prixplus/server/database"
-	"github.com/prixplus/server/router"
+	"github.com/prixplus/server/routers"
 	"github.com/prixplus/server/settings"
 )
 
@@ -34,10 +34,10 @@ func main() {
 	log.Printf("Server starting in %s mode at address: %s", sets.Env, ":8080\n\n")
 
 	// Init routes
-	handler := router.Init()
+	routes := routers.Init()
 
 	// Manners allows you to shut your Go webserver down gracefully, without dropping any requests
-	err = manners.ListenAndServe(":8080", handler)
+	err = manners.ListenAndServe(":8080", routes)
 	if err != nil {
 		log.Fatal("Error starting server: ", err)
 		return
