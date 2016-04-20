@@ -1,28 +1,26 @@
-package main
+package database
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
+
 	_ "github.com/lib/pq"
 	"github.com/prixplus/server/model"
+	"github.com/prixplus/server/settings"
 )
 
-const (
-	user     = "postgres"
-	password = "pass"
-	host     = "prix.plus"
-	dbname   = "prix"
-	sslmode  = "disable"
-)
+// DB Singleton
+var db *sql.DB
 
-func InitDB() (*sql.DB, error) {
+func connect() (*sql.DB, error) {
+
+	sets, err := settings.Get()
 
 	dbinfo := fmt.Sprintf("user=%s password=%s host=%s dbname=%s sslmode=%s",
-		user, password, host, dbname, sslmode)
+		sets.DB.User, sets.DB.Password, sets.DB.Host, sets.DB.Name, sets.DB.SSLMode)
 
-	db, err := sql.Open("postgres", dbinfo)
+	db, err = sql.Open("postgres", dbinfo)
 	if err != nil {
 		return nil, err
 	}
@@ -33,10 +31,10 @@ func InitDB() (*sql.DB, error) {
 		return nil, err
 	}
 
-	// If we are in debuggin
+	// If we are in development
 	// so we will create temporary tables
 	// and insert some dub data
-	if !gin.IsDebugging() {
+	if sets.IsProduction() {
 		return db, nil
 	}
 
@@ -52,6 +50,13 @@ func InitDB() (*sql.DB, error) {
 		return nil, errors.New("Error populating schema: " + err.Error())
 	}
 
+	return db, nil
+}
+
+func Get() (*sql.DB, error) {
+	if db == nil {
+		return connect()
+	}
 	return db, nil
 }
 

@@ -1,26 +1,31 @@
 package router
 
 import (
-	"database/sql"
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/prixplus/server/handler"
 	"github.com/prixplus/server/middleware"
-	"os"
+	"github.com/prixplus/server/settings"
 )
 
 // HTTP methods and status code follow REST convention
 // http://www.restapitutorial.com/lessons/httpmethods.html
-func Init(db *sql.DB) *gin.Engine {
+func Init() *gin.Engine {
+
+	sets, err := settings.Get()
+	if err != nil {
+		log.Fatal("Error getting Settings: ", err)
+	}
 
 	r := gin.New()
 	r.Use(gin.Logger())
-	r.Use(middleware.Recovery(db))
-	r.Use(middleware.Auth(db))
+	r.Use(middleware.Recovery())
+	r.Use(middleware.Auth())
 
-	directory := os.Getenv("GOPATH") + "/src/github.com/prixplus/server/"
-	r.LoadHTMLGlob(directory + "templates/*")
-	r.StaticFile("/favicon.ico", directory+"assets/favicon.ico")
-	r.Static("/assets", directory+"assets")
+	r.LoadHTMLGlob(sets.Dir + "templates/*")
+	r.StaticFile("/favicon.ico", sets.Dir+"assets/favicon.ico")
+	r.Static("/assets", sets.Dir+"assets")
 
 	// Main route
 	r.GET("/", func(c *gin.Context) {
@@ -39,15 +44,15 @@ func Init(db *sql.DB) *gin.Engine {
 			})
 		})
 
-		api.POST("/login", handler.Login(db))
-		api.GET("/refresh_token", handler.Refresh(db))
+		api.POST("/login", handler.Login())
+		api.GET("/refresh_token", handler.Refresh())
 
 		// Get user himself
-		api.GET("/me", handler.GetMe(db))
+		api.GET("/me", handler.GetMe())
 		// Insert a new user
-		api.POST("/users", handler.PostUser(db))
+		api.POST("/users", handler.PostUser())
 		// Update an new user
-		api.PUT("/users/:id", handler.PutUser(db))
+		api.PUT("/users/:id", handler.PutUser())
 
 	}
 

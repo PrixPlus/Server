@@ -1,15 +1,15 @@
 package middleware
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func Recovery(db *sql.DB) gin.HandlerFunc {
+func Recovery() gin.HandlerFunc {
 	// Do some initialization logic here
 	// Foo()
 	return func(c *gin.Context) {

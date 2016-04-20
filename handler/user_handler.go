@@ -1,18 +1,25 @@
 package handler
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/prixplus/server/model"
+	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/prixplus/server/database"
+	"github.com/prixplus/server/model"
 )
 
 // Get the User of the current session
-func GetMe(db *sql.DB) gin.HandlerFunc {
+func GetMe() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		db, err := database.Get()
+		if err != nil {
+			log.Fatal("Error getting DB: ", err)
+		}
 
 		// Identify if user is or isn't logged
 		// with a valid auth token
@@ -24,7 +31,7 @@ func GetMe(db *sql.DB) gin.HandlerFunc {
 		uId := sessionId.(int64)
 
 		user := model.User{Id: uId}
-		err := user.Get(db)
+		err = user.Get(db)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error getting users with your Id: "+err.Error()))
 			return
@@ -39,12 +46,17 @@ func GetMe(db *sql.DB) gin.HandlerFunc {
 // Create an User
 // Return an Location header with the location of the new content
 // in body returns the location and the new user as its results
-func PostUser(db *sql.DB) gin.HandlerFunc {
+func PostUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		db, err := database.Get()
+		if err != nil {
+			log.Fatal("Error getting DB: ", err)
+		}
 
 		var user model.User
 
-		err := c.BindJSON(&user)
+		err = c.BindJSON(&user)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error parsing JSON: "+err.Error()))
 			return
@@ -84,8 +96,13 @@ func PostUser(db *sql.DB) gin.HandlerFunc {
 }
 
 // Update an User
-func PutUser(db *sql.DB) gin.HandlerFunc {
+func PutUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		db, err := database.Get()
+		if err != nil {
+			log.Fatal("Error getting DB: ", err)
+		}
 
 		// Identify if user is or isn't logged
 		// with a valid auth token

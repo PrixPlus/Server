@@ -1,24 +1,26 @@
 package main
 
 import (
-	"github.com/braintree/manners"
-	"github.com/gin-gonic/gin"
-	"github.com/prixplus/server/router"
 	"log"
-	"os"
-	"strings"
+
+	"github.com/braintree/manners"
+	"github.com/prixplus/server/database"
+	"github.com/prixplus/server/router"
+	"github.com/prixplus/server/settings"
 )
 
 func main() {
-	// If var $MODE is set to RELEASE,
-	// than starts server in release mode
-	mode := strings.ToLower(os.Getenv("MODE"))
-	if mode == "release" && gin.IsDebugging() {
-		gin.SetMode(gin.ReleaseMode)
+
+	log.Println()
+
+	// Load singleton settings
+	sets, err := settings.Get()
+	if err != nil {
+		log.Fatal("Error loading settings: ", err)
 	}
 
-	// Init DB connection
-	db, err := InitDB()
+	// Init DB singleton connection
+	db, err := database.Get()
 	if err != nil {
 		log.Fatal("Error initializing DB: ", err)
 	}
@@ -27,8 +29,11 @@ func main() {
 	defer db.Close()
 
 	// Logging the mode server is starting
-	log.Printf("Server starting in %s mode at address: %s", gin.Mode(), ":8080")
+	log.Printf("Server starting in %s mode at address: %s", sets.Env, ":8080\n\n")
+
+	// Init routes
+	handler := router.Init()
 
 	// Manners allows you to shut your Go webserver down gracefully, without dropping any requests
-	manners.ListenAndServe(":8080", router.Init(db))
+	manners.ListenAndServe(":8080", handler)
 }

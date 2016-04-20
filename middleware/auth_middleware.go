@@ -1,26 +1,25 @@
 package middleware
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"net/http"
+	"github.com/prixplus/server/settings"
 )
-
-// Duplicate in Middleware and Handler
-// It should be in model Auth ?
-const (
-	signingAlgorithm = "HS256"
-)
-
-var secretKey = []byte("7hE Pr!x V3ry 53CRE7 K3Y 7h47 nO0N3 kN0w5!")
 
 // Apply for private routes
-func Auth(db *sql.DB) gin.HandlerFunc {
+func Auth() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
+
+		sets, err := settings.Get()
+		if err != nil {
+			log.Fatal("Error getting Settings: ", err)
+		}
 
 		header := c.Request.Header.Get("Authorization")
 
@@ -40,7 +39,7 @@ func Auth(db *sql.DB) gin.HandlerFunc {
 
 		token, err := jwt.Parse(header[7:], func(token *jwt.Token) (interface{}, error) {
 			// Check if encryption algorithm in token is the same
-			if jwt.GetSigningMethod(signingAlgorithm) != token.Method {
+			if jwt.GetSigningMethod(sets.JWT.Algorithm) != token.Method {
 				return nil, errors.New("Invalid signing algorithm")
 			}
 
@@ -48,7 +47,7 @@ func Auth(db *sql.DB) gin.HandlerFunc {
 			// but it is optional and isn't utilized in this package
 			// secretKey, err := myLookupForSecretKey(token.Header["kid"])
 
-			return secretKey, nil
+			return []byte(sets.JWT.SecretKey), nil
 		})
 
 		if err != nil {
