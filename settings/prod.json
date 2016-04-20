@@ -1,0 +1,16 @@
+{
+  "Production": true,
+  "DB": {
+    "User": "",
+    "Password": "",
+    "Host": "",
+    "Name": "",
+    "SSLMode": ""
+  },
+  "JWT": {
+    "Relm": "",
+    "Algorithm": "",
+    "Expiration": 0,
+    "SecretKey": ""
+  }
+}
