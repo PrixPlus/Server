@@ -9,8 +9,10 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/prixplus/server/database"
+	"github.com/prixplus/server/errs"
 	"github.com/prixplus/server/model"
 	"github.com/prixplus/server/settings"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // LoginHandler can be used by clients to get a jwt token.
@@ -30,23 +32,38 @@ func Login() gin.HandlerFunc {
 			log.Fatal("Error getting DB: ", err)
 		}
 
-		var user model.User
+		var login model.Login
 
-		err = c.BindJSON(&user)
+		err = c.BindJSON(&login)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error parsing JSON: "+err.Error()))
 			return
 		}
 
-		if len(user.Email) == 0 || len(user.Password) == 0 {
+		if len(login.Email) == 0 || len(login.Password) == 0 {
 			c.AbortWithError(http.StatusBadRequest, errors.New("Email or Password can not be empty"))
 			return
 		}
 
-		u := model.User{Email: user.Email, Password: user.Password}
+		u := model.User{Email: login.Email}
 		err = u.Get(db)
+		if err == errs.ElementNotFound {
+			c.AbortWithError(errs.Status[err], errors.New("User not found!"))
+			return
+		}
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, errors.New("Error getting user: "+err.Error()))
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(login.Password), []byte(u.Password))
+		if err == bcrypt.ErrHashTooShort {
+			c.Error(errors.New("PASS:" + login.Password + ". PASS2:" + u.Password))
+			c.AbortWithError(http.StatusBadRequest, errors.New("This password is too short: "+err.Error()))
+			return
+		} else if err == bcrypt.ErrMismatchedHashAndPassword {
+			c.Error(errors.New("PASS:" + login.Password + ". PASS2:" + u.Password))
+			c.AbortWithError(http.StatusBadRequest, errors.New("Password does not match: "+err.Error()))
 			return
 		}
 

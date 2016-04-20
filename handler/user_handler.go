@@ -37,7 +37,7 @@ func GetMe() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"results": []model.User{user},
 		})
 	}
@@ -54,32 +54,33 @@ func PostUser() gin.HandlerFunc {
 			log.Fatal("Error getting DB: ", err)
 		}
 
-		var user model.User
+		var login model.Login
 
-		err = c.BindJSON(&user)
+		err = c.BindJSON(&login)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error parsing JSON: "+err.Error()))
 			return
 		}
 
-		if len(user.Email) == 0 || len(user.Password) == 0 {
+		if len(login.Email) == 0 || len(login.Password) == 0 {
 			c.AbortWithError(http.StatusBadRequest, errors.New("Email or Password can not be empty"))
 			return
 		}
 
 		// Test if already exists an user with this email
-		u := model.User{Email: user.Email}
+		u := model.User{Email: login.Email}
 		users, err := u.GetAll(db)
 		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, errors.New("Error getting users with email "+user.Email+": "+err.Error()))
+			c.AbortWithError(http.StatusBadRequest, errors.New("Error getting users with email "+login.Email+": "+err.Error()))
 			return
 		}
 
 		if len(users) > 0 {
-			c.AbortWithError(http.StatusConflict, errors.New("Sorry, email "+user.Email+" already taken"))
+			c.AbortWithError(http.StatusConflict, errors.New("Sorry, email "+login.Email+" already taken"))
 			return
 		}
 
+		user := model.User{Email: login.Email, Password: login.Password}
 		err = user.Insert(db)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error inserting your user: "+err.Error()))
@@ -134,16 +135,33 @@ func PutUser() gin.HandlerFunc {
 			return
 		}
 
-		// Check if user isn't trying to
-		// Change his Id or
-		// to change his email or password to ant empty value
-		if (user.Id != 0 && user.Id != uId) || len(user.Email) == 0 || len(user.Password) == 0 {
-			c.AbortWithError(http.StatusBadRequest, errors.New("You can't change your Id and your Email or Password can't be empty"))
+		u := model.User{Id: uId}
+		err = u.Get(db)
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, errors.New("Error getting user: "+err.Error()))
 			return
 		}
 
-		// If user didn't send his id in the JSON object
+		// Check if user isn't trying to
+		// Change his Id or
+		// to change his email or password to ant empty value
+		if user.Id != 0 && user.Id != uId {
+			c.AbortWithError(http.StatusBadRequest, errors.New("You can't change your Id"))
+			return
+		}
+
+		// If user didn't send his Id
 		user.Id = uId
+
+		// Check if he isn't trying to change his email
+		if len(user.Email) == 0 {
+			user.Email = u.Email
+		}
+
+		// Check if he isn't trying to change his password
+		if len(user.Password) == 0 {
+			user.Password = u.Password
+		}
 
 		err = user.Update(db)
 		if err != nil {

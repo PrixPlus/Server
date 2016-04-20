@@ -25,12 +25,13 @@ This route is used to check the service status.
 
 #### [POST] /api/login
 This route is used to authenticate an user, it returns an valid token to make authenticated api calls.
+This route uses `golang.org/x/crypto/bcrypt` that implements Provos and Mazières's bcrypt adaptive hashing algorithm,
 
 - Request:
 ```javascript
 {
   "email":"user@prix.plus",
-  "password":"pass"
+  "password":"$2a$10$nLI0KOH0JGUqz3bjdtz6vOz6W/yo10suD.BC9Z8.rR9eBCUCzTOX."
 }
 ```
 
@@ -38,7 +39,7 @@ This route is used to authenticate an user, it returns an valid token to make au
 ```javascript
 {
   "expire":"2016-05-15T01:43:07-04:00",
-  "token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjMyOTA5ODcsImlkIjoxfQ.ROZ9l2I41QE3Mz9jhJdLmqHAQpQr5SazzCU7q-8WSnk"
+  "token":"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjM3MTk0NjMsImlkIjoxfQ.5pd5X1WFk2t9PiuOb6T0D95mNJ5Fp7uxOBMOoiUh6adyewf64JSJZpv66y9EAjghPTvJ55bsxEhOxX-FcKr41Q"
 }
 ```
 
@@ -52,7 +53,7 @@ This route is used to refresh a valid token.
 ```javascript
 {
   "expire":"2016-05-15T02:17:12-03:00",
-  "token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjMyODk0MzIsImlkIjoxfQ.8Rz7x1s7CJ4xZ-PDomuV8bAvgmhIp6nSoPDjfJ2Bha0"
+  "token":"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjM3MTk0NjMsImlkIjoxfQ.5pd5X1WFk2t9PiuOb6T0D95mNJ5Fp7uxOBMOoiUh6adyewf64JSJZpv66y9EAjghPTvJ55bsxEhOxX-FcKr41Q"
 }
 ```
 
@@ -68,7 +69,6 @@ This route is used to retrieve the current user in the session.
   "results":[
     {
       "id":1,
-      "password":"pass",
       "email":"user@prix.plus"
     }
   ]
@@ -83,7 +83,7 @@ This route is used to create a new user.
 ```javascript
 {
   "email":"newuser@prix.plus",
-  "password":"pass"
+  "password":"123456"
 }
 ```
 
@@ -95,7 +95,6 @@ This route is used to create a new user.
   "results":[
     {
       "id":2,
-      "password":"pass",
       "email":"newuser@prix.plus"
     }
   ]
@@ -105,14 +104,15 @@ This route is used to create a new user.
 
 #### [PUT] /api/users/:id
 This route is used to update users info. You can't use an `id` differente from yours.
+Obs: **In this route all fields are optional**, so you can't resend your email
 
 - Request Header: `Authorization: Bearer TOKEN`
 
 - Request:
 ```javascript
 {
-  "id":1, // Optional
-  "password":"pass",
+  "id":1,
+  "password":"123456",
   "email":"newuser@prix.plus"
 }
 ```
@@ -123,9 +123,23 @@ This route is used to update users info. You can't use an `id` differente from y
   "results":[
     {
       "id":1,
-      "password":"pass",
+      "password":"123456",
       "email":"newuser@prix.plus"
     }
   ]
+}
+```
+
+# TESTS
+
+Test user: Email `user@prix.plus` and Password `123456` 
+
+#### Testing `/api/login` route
+
+- Request:
+```javascript
+{
+  "email":"user@prix.plus",
+  "password":"$2a$10$nLI0KOH0JGUqz3bjdtz6vOz6W/yo10suD.BC9Z8.rR9eBCUCzTOX."
 }
 ```

@@ -17,12 +17,14 @@ func main() {
 	sets, err := settings.Get()
 	if err != nil {
 		log.Fatal("Error loading settings: ", err)
+		return
 	}
 
 	// Init DB singleton connection
 	db, err := database.Get()
 	if err != nil {
 		log.Fatal("Error initializing DB: ", err)
+		return
 	}
 
 	// Close DB when main() returns
@@ -35,5 +37,12 @@ func main() {
 	handler := router.Init()
 
 	// Manners allows you to shut your Go webserver down gracefully, without dropping any requests
-	manners.ListenAndServe(":8080", handler)
+	err = manners.ListenAndServe(":8080", handler)
+	if err != nil {
+		log.Fatal("Error starting server: ", err)
+		return
+	}
+	defer manners.Close()
+
+	defer log.Println("God bye!")
 }

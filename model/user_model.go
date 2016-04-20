@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+
+	"github.com/prixplus/server/errs"
 )
 
 type User struct {
 	Id       int64  `json:"id"`
-	Password string `json:"password"`
+	Password string `json:"-"` // Not send or receive
 	Email    string `json:"email"`
 }
 
@@ -109,7 +111,7 @@ func (u *User) Get(db *sql.DB) error {
 	} else {
 		// User not found, clear the reference
 		*u = User{}
-		return errors.New("Element not found")
+		return errs.ElementNotFound
 	}
 
 	// Check if this Elem returned is not unique
