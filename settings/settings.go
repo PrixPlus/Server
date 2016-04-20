@@ -42,7 +42,9 @@ var sets *Settings
 
 func load() (*Settings, error) {
 
-	dir := os.Getenv("GOPATH") + "/src/github.com/prixplus/server/"
+	gopath := os.Getenv("GOPATH")
+
+	dir := gopath + "/src/github.com/prixplus/server/"
 
 	env := os.Getenv("GO_ENV")
 	if env == "" {
@@ -50,8 +52,8 @@ func load() (*Settings, error) {
 		env = "dev"
 	}
 
-	// Reading the JSON file
-	filePath := dir + "settings/" + env + ".json"
+	// Reading the JSON file in $GOPATH folder
+	filePath := gopath + "/" + env + ".json"
 	jsonFile, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error reading config file %s: %s", filePath, err.Error()))

@@ -2,6 +2,10 @@
 
 Introduction to the API
 
+# Environment settings
+
+To set the environment settings, please coppy the file `settings/dev.json` to folder `$GOPATH` an change its contents. The name of the file should be the same value in `GO_ENV` environment variable, or should be `dev.json` if it's not set.
+
 # API
 
 #### [GET] /
