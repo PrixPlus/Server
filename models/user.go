@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/prixplus/server/database"
+
 	"github.com/prixplus/server/errs"
 )
 
@@ -19,8 +21,9 @@ func (u User) String() string {
 	return fmt.Sprintf("User<%d %v>", u.Id, u.Email)
 }
 
-func (u User) Delete(db *sql.DB) error {
-	stmt, err := db.Prepare("DELETE FROM users WHERE id=$1")
+func (u User) Delete(tx *sql.Tx) error {
+	query := "DELETE FROM users WHERE id=$1"
+	stmt, err := database.Prepare(query, tx)
 	if err != nil {
 		return err
 	}
@@ -44,8 +47,9 @@ func (u User) Delete(db *sql.DB) error {
 	return nil
 }
 
-func (u *User) Insert(db *sql.DB) error {
-	stmt, err := db.Prepare("INSERT INTO users(password, email) VALUES($1,$2) RETURNING id")
+func (u *User) Insert(tx *sql.Tx) error {
+	query := "INSERT INTO users(password, email) VALUES($1,$2) RETURNING id"
+	stmt, err := database.Prepare(query, tx)
 	if err != nil {
 		return err
 	}
@@ -60,13 +64,16 @@ func (u *User) Insert(db *sql.DB) error {
 	return nil
 }
 
-func (u User) Update(db *sql.DB) error {
-	stmt, err := db.Prepare("UPDATE users SET password=$1, email=$2 WHERE id=$3")
+// This method doesn't change password
+// ... not yet, or maybe we need a specific method
+func (u User) Update(tx *sql.Tx) error {
+	query := "UPDATE users SET email=$2 WHERE id=$1"
+	stmt, err := database.Prepare(query, tx)
 	if err != nil {
 		return err
 	}
 
-	res, err := stmt.Exec(u.Password, u.Email, u.Id)
+	res, err := stmt.Exec(u.Id, u.Email)
 	if err != nil {
 		return err
 	}
@@ -87,11 +94,12 @@ func (u User) Update(db *sql.DB) error {
 
 // This method should return just one Elem or an error
 // You can get any combination of the fields
-func (u *User) Get(db *sql.DB) error {
-	stmt, err := db.Prepare("SELECT id, password, email FROM users WHERE " +
+func (u *User) Get(tx *sql.Tx) error {
+	query := "SELECT id, password, email FROM users WHERE " +
 		"($1=0 OR id=$1) AND " +
 		"($2='' OR password=$2) AND " +
-		"($3='' OR email=$3)")
+		"($3='' OR email=$3)"
+	stmt, err := database.Prepare(query, tx)
 	if err != nil {
 		return err
 	}
@@ -132,14 +140,15 @@ func (u *User) Get(db *sql.DB) error {
 
 // This method should return all Elements in db
 // equals to the Elem given
-func (u *User) GetAll(db *sql.DB) ([]User, error) {
+func (u *User) GetAll(tx *sql.Tx) ([]User, error) {
+	query := "SELECT id, password, email FROM users WHERE " +
+		"($1=0 OR id=$1) AND " +
+		"($2='' OR password=$2) AND " +
+		"($3='' OR email=$3)"
 
 	users := []User{}
 
-	stmt, err := db.Prepare("SELECT id, password, email FROM users WHERE " +
-		"($1=0 OR id=$1) AND " +
-		"($2='' OR password=$2) AND " +
-		"($3='' OR email=$3)")
+	stmt, err := database.Prepare(query, tx)
 	if err != nil {
 		return users, err
 	}

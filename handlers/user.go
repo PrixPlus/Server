@@ -3,23 +3,18 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/gin-gonic/gin"
-	"github.com/prixplus/server/database"
 	"github.com/prixplus/server/models"
 )
 
 // Get the User of the current session
 func GetMe() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		db, err := database.Get()
-		if err != nil {
-			log.Fatal("Error getting DB: ", err)
-		}
 
 		// Identify if user is or isn't logged
 		// with a valid auth token
@@ -31,7 +26,7 @@ func GetMe() gin.HandlerFunc {
 		uId := sessionId.(int64)
 
 		user := models.User{Id: uId}
-		err = user.Get(db)
+		err := user.Get(nil) // Not using any transaction
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error getting users with your Id: "+err.Error()))
 			return
@@ -49,14 +44,9 @@ func GetMe() gin.HandlerFunc {
 func PostUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		db, err := database.Get()
-		if err != nil {
-			log.Fatal("Error getting DB: ", err)
-		}
-
 		var login models.Login
 
-		err = c.BindJSON(&login)
+		err := c.BindJSON(&login)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error parsing JSON: "+err.Error()))
 			return
@@ -69,7 +59,7 @@ func PostUser() gin.HandlerFunc {
 
 		// Test if already exists an user with this email
 		u := models.User{Email: login.Email}
-		users, err := u.GetAll(db)
+		users, err := u.GetAll(nil) // Not using any transaction
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, errors.New("Error getting users with email "+login.Email+": "+err.Error()))
 			return
@@ -80,8 +70,13 @@ func PostUser() gin.HandlerFunc {
 			return
 		}
 
-		user := models.User{Email: login.Email, Password: login.Password}
-		err = user.Insert(db)
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(login.Password), bcrypt.DefaultCost)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, errors.New("Error encrypting password: "+err.Error()))
+		}
+
+		user := models.User{Email: login.Email, Password: string(hashedPassword)}
+		err = user.Insert(nil) // Not using any transaction
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error inserting your user: "+err.Error()))
 			return
@@ -99,11 +94,6 @@ func PostUser() gin.HandlerFunc {
 // Update an User
 func PutUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		db, err := database.Get()
-		if err != nil {
-			log.Fatal("Error getting DB: ", err)
-		}
 
 		// Identify if user is or isn't logged
 		// with a valid auth token
@@ -131,14 +121,14 @@ func PutUser() gin.HandlerFunc {
 
 		err = c.BindJSON(&user)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error parsing JSON: "+err.Error()))
+			c.AbortWithError(http.StatusBadRequest, errors.New("Error parsing JSON: "+err.Error()))
 			return
 		}
 
 		u := models.User{Id: uId}
-		err = u.Get(db)
+		err = u.Get(nil) // Not using any transaction
 		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, errors.New("Error getting user: "+err.Error()))
+			c.AbortWithError(http.StatusNoContent, errors.New("Error getting user: "+err.Error()))
 			return
 		}
 
@@ -163,13 +153,13 @@ func PutUser() gin.HandlerFunc {
 			user.Password = u.Password
 		}
 
-		err = user.Update(db)
+		err = user.Update(nil) // Not using any transaction
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error trying to update your user: "+err.Error()))
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"results": []models.User{user},
 		})
 	}

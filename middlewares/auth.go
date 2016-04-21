@@ -3,23 +3,16 @@ package middlewares
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/prixplus/server/settings"
+	"github.com/prixplus/server/auth"
 )
 
 // Apply for private routes
 func Auth() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
-
-		sets, err := settings.Get()
-		if err != nil {
-			log.Fatal("Error getting Settings: ", err)
-		}
 
 		header := c.Request.Header.Get("Authorization")
 
@@ -37,26 +30,9 @@ func Auth() gin.HandlerFunc {
 			return
 		}
 
-		token, err := jwt.Parse(header[7:], func(token *jwt.Token) (interface{}, error) {
-			// Check if encryption algorithm in token is the same
-			if jwt.GetSigningMethod(sets.JWT.Algorithm) != token.Method {
-				return nil, errors.New("Invalid signing algorithm")
-			}
-
-			// I could use some key id to identify whay secret key are we using
-			// but it is optional and isn't utilized in this package
-			// secretKey, err := myLookupForSecretKey(token.Header["kid"])
-
-			return []byte(sets.JWT.SecretKey), nil
-		})
-
+		token, err := auth.ParseToken(header[7:])
 		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, errors.New("Error parsing token: "+err.Error()))
-			return
-		}
-
-		if !token.Valid {
-			c.AbortWithError(http.StatusUnauthorized, errors.New("Ivalid token provided or it's expired"))
+			c.AbortWithError(http.StatusBadRequest, errors.New("Error in token: "+err.Error()))
 			return
 		}
 
