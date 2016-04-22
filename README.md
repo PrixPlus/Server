@@ -114,8 +114,8 @@ This route is used to create a new user.
 
 #### [PUT] /api/users/:id
 This route is used to update users info. You can't use an `id` differente from yours.
-Obs: **In this route all fields are optional**, so you can't resend your email
-TODO: Not working for changing password yet
+
+Note: If field `Password` was sent it works properly
 
 - Request Header: `Authorization: Bearer TOKEN`
 
@@ -123,7 +123,7 @@ TODO: Not working for changing password yet
 ```javascript
 {
   "id":1,
-  "password":"123456", // TODO
+  "password":"123456",
   "email":"newtest@test.com"
 }
 ```

@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"golang.org/x/crypto/bcrypt"
-
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/prixplus/server/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Get the User of the current session
@@ -31,6 +31,9 @@ func GetMe() gin.HandlerFunc {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error getting users with your Id: "+err.Error()))
 			return
 		}
+
+		// Not sending password, it will be omitted
+		user.Password = ""
 
 		c.JSON(http.StatusOK, gin.H{
 			"results": []models.User{user},
@@ -58,8 +61,8 @@ func PostUser() gin.HandlerFunc {
 		}
 
 		// Test if already exists an user with this email
-		u := models.User{Email: login.Email}
-		users, err := u.GetAll(nil) // Not using any transaction
+		userSaved := models.User{Email: login.Email}
+		users, err := userSaved.GetAll(nil) // Not using any transaction
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, errors.New("Error getting users with email "+login.Email+": "+err.Error()))
 			return
@@ -84,9 +87,11 @@ func PostUser() gin.HandlerFunc {
 
 		c.Header("Location", fmt.Sprintf("/api/users/%d", user.Id))
 
+		// Not sending password, it will be omitted
+		user.Password = ""
+
 		c.JSON(http.StatusCreated, gin.H{
-			"location": fmt.Sprintf("/api/users/%d", user.Id),
-			"results":  []models.User{user},
+			"results": []models.User{user},
 		})
 	}
 }
@@ -125,8 +130,9 @@ func PutUser() gin.HandlerFunc {
 			return
 		}
 
-		u := models.User{Id: uId}
-		err = u.Get(nil) // Not using any transaction
+		// Checks if this user really exists
+		userSaved := models.User{Id: uId}
+		err = userSaved.Get(nil) // Not using any transaction
 		if err != nil {
 			c.AbortWithError(http.StatusNoContent, errors.New("Error getting user: "+err.Error()))
 			return
@@ -143,14 +149,30 @@ func PutUser() gin.HandlerFunc {
 		// If user didn't send his Id
 		user.Id = uId
 
-		// Check if he isn't trying to change his email
-		if len(user.Email) == 0 {
-			user.Email = u.Email
+		// If user is trying to change the his email
+		// so validate the new data
+		if len(user.Email) != 0 {
+			// Validate email
+			if !govalidator.IsEmail(user.Email) {
+				c.AbortWithError(http.StatusBadRequest, errors.New("Error setting this email: "+user.Email))
+				return
+			}
+		} else {
+			// Or just use the saved email instead
+			user.Email = userSaved.Email
 		}
 
-		// Check if he isn't trying to change his password
-		if len(user.Password) == 0 {
-			user.Password = u.Password
+		// If user is trying to change his password
+		// so we have to encrypt this new password
+		if len(user.Password) != 0 {
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+			if err != nil {
+				c.AbortWithError(http.StatusInternalServerError, errors.New("Error encrypting password: "+err.Error()))
+			}
+			user.Password = string(hashedPassword)
+		} else {
+			// Or just use the saved password instead
+			user.Password = userSaved.Password
 		}
 
 		err = user.Update(nil) // Not using any transaction
@@ -158,6 +180,9 @@ func PutUser() gin.HandlerFunc {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error trying to update your user: "+err.Error()))
 			return
 		}
+
+		// Not sending password, it will be omitted
+		user.Password = ""
 
 		c.JSON(http.StatusOK, gin.H{
 			"results": []models.User{user},

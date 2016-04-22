@@ -12,8 +12,8 @@ import (
 )
 
 type User struct {
-	Id       int64  `json:"id"`
-	Password string `json:"-"` // Not send or receive
+	Id       int64  `json:"id,string"`          // Send as a string
+	Password string `json:"password,omitempty"` // Omitted if empty
 	Email    string `json:"email"`
 }
 
@@ -64,16 +64,15 @@ func (u *User) Insert(tx *sql.Tx) error {
 	return nil
 }
 
-// This method doesn't change password
-// ... not yet, or maybe we need a specific method
+// Update user in database
 func (u User) Update(tx *sql.Tx) error {
-	query := "UPDATE users SET email=$2 WHERE id=$1"
+	query := "UPDATE users SET email=$1, password=$2 WHERE id=$3"
 	stmt, err := database.Prepare(query, tx)
 	if err != nil {
 		return err
 	}
 
-	res, err := stmt.Exec(u.Id, u.Email)
+	res, err := stmt.Exec(u.Email, u.Password, u.Id)
 	if err != nil {
 		return err
 	}

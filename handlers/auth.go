@@ -47,6 +47,7 @@ func Login() gin.HandlerFunc {
 			c.AbortWithError(http.StatusBadRequest, errors.New("This password is too short: "+err.Error()))
 			return
 		} else if err == bcrypt.ErrMismatchedHashAndPassword {
+			c.Error(errors.New("Password received:" + login.Password))
 			c.AbortWithError(http.StatusBadRequest, errors.New("Password does not match: "+err.Error()))
 			return
 		}

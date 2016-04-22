@@ -23,7 +23,7 @@ var (
 )
 
 // Create temporary schemas in DB and insert some tests entities
-func InitTest() error {
+func InitData() error {
 
 	// Creates TEMP schema
 	err := createTestSchema()
