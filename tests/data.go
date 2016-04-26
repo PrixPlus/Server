@@ -1,7 +1,7 @@
+// Create temporary schemas in DB and insert some tests entities
 package tests
 
 import (
-	"errors"
 	"github.com/prixplus/server/auth"
 
 	"github.com/prixplus/server/database"
@@ -11,6 +11,7 @@ import (
 // Temporary table schemas
 var schemas = []string{
 	`CREATE TEMP TABLE users (id serial, password text, email text)`,
+	`CREATE TEMP TABLE products (id serial, gtin text, description text, thumbnail text, price real, priceavg real, pricemax real, pricemin real)`,
 }
 
 // Temporary test entities
@@ -20,28 +21,12 @@ var (
 	UserTest = &models.User{Email: "test@test.com", Password: "$2a$10$tisC/yatxRhEIPNPAgH.yexTuPpGQ4BRAqsVrGViteXPsPDpe1Mx2"}
 	// Initializes in InitTestDB
 	TokenTest = &models.Token{}
+	// The first test product
+	ProductTest = &models.Product{Gtin: "7894900700046", Description: "REFRIGERANTE COCA COLA LATA ZERO 350ML", Thumbnail: "https://s3.amazonaws.com/bluesoft-cosmos/products/7894900700220/zhksxcua", Price: 4.53, PriceMax: 6.30, PriceMin: 3.90}
 )
 
-// Create temporary schemas in DB and insert some tests entities
-func InitData() error {
-
-	// Creates TEMP schema
-	err := createTestSchema()
-	if err != nil {
-		return errors.New("Error creating schema: " + err.Error())
-	}
-
-	// Populating our debugging server
-	err = insertTestEntityies()
-	if err != nil {
-		return errors.New("Error populating schema: " + err.Error())
-	}
-
-	return nil
-}
-
 // Creating temporary test schemas
-func createTestSchema() error {
+func CreateTempTables() error {
 
 	db, err := database.Get()
 	if err != nil {
@@ -58,7 +43,7 @@ func createTestSchema() error {
 }
 
 // Inserting temporary test entities
-func insertTestEntityies() error {
+func InsertTestEntityies() error {
 
 	// Adding UserTest
 	err := UserTest.Insert(nil)
@@ -67,6 +52,12 @@ func insertTestEntityies() error {
 	}
 
 	TokenTest, err = auth.NewToken(*UserTest)
+	if err != nil {
+		return err
+	}
+
+	// Adding ProductTest
+	err = ProductTest.Insert(nil)
 	if err != nil {
 		return err
 	}

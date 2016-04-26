@@ -76,3 +76,37 @@ func (s *TestSuite) TestCreateAndChangeUser(c *C) {
 	// Test if our changes has saved
 	c.Assert(userModified, DeepEquals, me)
 }
+
+// Testing create, get and modify product
+func (s *TestSuite) TestCreateGetModifyProduct(c *C) {
+
+	// Creating a new user
+	login := &models.Login{Email: "TestCreateGetModifyProduct@email.com", Password: "123456"}
+	postUser(login, c)
+
+	// Trying to log in with this new user
+	token := getToken(login, c)
+
+	product := &models.Product{Gtin: "7894900011593", Description: "REFRIGERANTE COCA-COLA 2,5LT", Thumbnail: "https://s3.amazonaws.com/bluesoft-cosmos/products/7894900011593"}
+
+	// Create this new product
+	p := postProduct(product, token, c)
+	// Get the new Id
+	product.Id = p.Id
+	// Test if inserted product is equals what whe sent
+	c.Assert(p, DeepEquals, product)
+
+	// Getting this new product
+	p = getProduct(&models.Product{Id: product.Id}, token, c)
+	c.Assert(p, DeepEquals, product)
+
+	product.Description = "NOVA COCA-COLA 2,5LT"
+
+	// Create this new product
+	p = putProduct(product, token, c)
+	c.Assert(p, DeepEquals, product)
+
+	// Getting the product list
+	ps := getProductList(&models.Product{}, token, c)
+	c.Assert(ps, HasLen, 1)
+}

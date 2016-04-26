@@ -51,8 +51,17 @@ func Init() *gin.Engine {
 		api.GET("/me", handlers.GetMe())
 		// Insert a new user
 		api.POST("/users", handlers.PostUser())
-		// Update an new user
+		// Update an user
 		api.PUT("/users/:id", handlers.PutUser())
+
+		// Get products like product given
+		api.GET("/products", handlers.GetProductList())
+		// Get products by id
+		api.GET("/products/:id", handlers.GetProduct())
+		// Insert a new product
+		api.POST("/products", handlers.PostProduct())
+		// Update a product
+		api.PUT("/products/:id", handlers.PutProduct())
 
 	}
 

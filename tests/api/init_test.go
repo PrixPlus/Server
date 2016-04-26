@@ -1,9 +1,10 @@
 package api_tests
 
 import (
-	"github.com/prixplus/server/tests"
 	"os"
 	"testing"
+
+	"github.com/prixplus/server/tests"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prixplus/server/database"
@@ -39,8 +40,10 @@ func (s *TestSuite) SetUpSuite(c *C) {
 	// Routing the API
 	router = routers.Init()
 
-	// Creating temporary schemas and insert some tests entities
-	tests.InitData()
+	// Creating temporary schemas
+	// It will not insert nothing
+	err = tests.CreateTempTables()
+	c.Assert(err, IsNil)
 }
 
 // When all finishes

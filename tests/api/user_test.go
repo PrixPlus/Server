@@ -88,7 +88,7 @@ func postUser(login *models.Login, c *C) *models.User {
 	return users[0]
 }
 
-// Creates a new user
+// Creates an exesting user
 func postUserMustConflict(login *models.Login, c *C) {
 	// Trying to create a new User with same email
 	// server should return StatusConflict

@@ -2,11 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"github.com/prixplus/server/tests"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/prixplus/server/tests"
 
 	"github.com/braintree/manners"
 	"github.com/prixplus/server/database"
@@ -38,7 +39,16 @@ func main() {
 	// Creating temporary schemas and insert some tests datas
 	// do it whenever server isn't in production
 	if !sets.IsProduction() {
-		tests.InitData()
+		err = tests.CreateTempTables()
+		if err != nil {
+			log.Fatal("Error creating temporary schemas: ", err)
+			return
+		}
+		err = tests.InsertTestEntityies()
+		if err != nil {
+			log.Fatal("Error creating tests entities: ", err)
+			return
+		}
 	}
 
 	// Logging the mode server is starting
@@ -60,7 +70,7 @@ func main() {
 
 }
 
-// Shut the server down gracefully if receive a interrupt s
+// Shut the server down gracefully if receive a interrupt signal
 func processStopedBySignal(db *sql.DB) {
 	// Stop server if someone kills the process
 	c := make(chan os.Signal, 1)
