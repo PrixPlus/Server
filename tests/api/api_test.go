@@ -1,5 +1,10 @@
 package api_tests
 
+import (
+	"github.com/prixplus/server/models"
+	. "gopkg.in/check.v1"
+)
+
 // Testing Refresh Token
 // this method uses the TokenTest
 func (s *TestSuite) TestLoginAndRefreshToken(c *C) {
@@ -27,7 +32,10 @@ func (s *TestSuite) TestLoginAndRefreshToken(c *C) {
 // it also checks if user has really changed in DB
 func (s *TestSuite) TestCreateAndChangeUser(c *C) {
 
+	//
 	// Creating a new user
+	//
+
 	login := &models.Login{Email: "TestCreateAndChangeUser@email.com", Password: "123456"}
 	postUser(login, c)
 
@@ -57,7 +65,10 @@ func (s *TestSuite) TestCreateAndChangeUser(c *C) {
 	user.Password = "" // Cleanning email to check all others
 	c.Assert(userModified, DeepEquals, user)
 
+	//
 	// Trying to login with the new Email and Password
+	//
+
 	token = getToken(&models.Login{Email: newEmail, Password: newPassword}, c)
 
 	// Testing if this token really works and our user has changed
