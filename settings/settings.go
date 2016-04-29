@@ -13,6 +13,7 @@ import (
 
 type Settings struct {
 	Production bool
+	Debug      bool
 
 	DB struct {
 		User     string
@@ -70,10 +71,10 @@ func load() (*Settings, error) {
 
 	// If we are in Development
 	// so we will set GIN to DebugMode
-	if sets.IsProduction() {
-		gin.SetMode(gin.ReleaseMode)
-	} else {
+	if sets.Debug {
 		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
 	}
 
 	return sets, nil

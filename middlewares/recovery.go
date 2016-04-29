@@ -3,7 +3,6 @@ package middlewares
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -28,7 +27,7 @@ func Recovery() gin.HandlerFunc {
 			// Ops, something goes wrong
 			// maybe bad request, or claims unauthorized...
 
-			log.Println("### Recovery middlewares ###")
+			fmt.Println("### Recovery middlewares ###")
 
 			if r != nil {
 				c.Error(errors.New(fmt.Sprintf("Panic! %s", r)))

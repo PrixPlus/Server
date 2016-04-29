@@ -35,15 +35,16 @@ func getProduct(product *models.Product, token *models.Token, c *C) *models.Prod
 }
 
 // Get products from a given example
-func getProductList(product *models.Product, token *models.Token, c *C) []*models.Product {
-
-	body, err := json.Marshal(product)
-	c.Assert(err, IsNil)
+func getProductList(q string, token *models.Token, c *C) []*models.Product {
 
 	// Test Refresh Token!
-	req, err := http.NewRequest("GET", "/api/products", bytes.NewReader(body))
+	req, err := http.NewRequest("GET", "/api/products", nil)
+	req.URL.Query().Add("q", q)
 	c.Assert(err, IsNil)
 	req.Header.Add("Authorization", "Bearer "+token.Raw)
+
+	fmt.Printf("REQ: %#v\n", req.URL.RawQuery)
+
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 	c.Assert(resp.Code, Equals, http.StatusOK)

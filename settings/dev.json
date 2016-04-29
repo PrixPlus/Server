@@ -1,5 +1,6 @@
 {
   "Production": false,
+  "Debug": true,
   "DB": {
     "User": "",
     "Password": "",

@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"log"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,19 +17,19 @@ import (
 
 func main() {
 
-	log.Println()
+	fmt.Println()
 
 	// Load singleton settings
 	sets, err := settings.Get()
 	if err != nil {
-		log.Fatal("Error loading settings: ", err)
+		fmt.Println("Error loading settings: ", err)
 		return
 	}
 
 	// Init DB singleton connection
 	db, err := database.Get()
 	if err != nil {
-		log.Fatal("Error initializing DB: ", err)
+		fmt.Println("Error initializing DB: ", err)
 		return
 	}
 
@@ -41,29 +41,33 @@ func main() {
 	if !sets.IsProduction() {
 		err = tests.CreateTempTables()
 		if err != nil {
-			log.Fatal("Error creating temporary schemas: ", err)
+			fmt.Println("Error creating temporary schemas: ", err)
 			return
 		}
-		err = tests.InsertTestEntityies()
+		err = tests.InsertTestEntities()
 		if err != nil {
-			log.Fatal("Error creating tests entities: ", err)
+			fmt.Println("Error creating tests entities: ", err)
 			return
 		}
 	}
 
 	// Logging the mode server is starting
-	log.Printf("Server starting in %s mode at address: %s", sets.Env, ":8080\n\n")
+	fmt.Printf("Server starting in %s mode at address: %s", sets.Env, ":8080\n\n")
 
-	// Init routes
-	routes := routers.Init()
+	// Init router
+	router, err := routers.Init()
+	if err != nil {
+		fmt.Println("Error initializing router: ", err)
+		return
+	}
 
 	// Shut the server down gracefully
 	processStopedBySignal(db)
 
 	// Manners allows you to shut your Go webserver down gracefully, without dropping any requests
-	err = manners.ListenAndServe(":8080", routes)
+	err = manners.ListenAndServe(":8080", router)
 	if err != nil {
-		log.Fatal("Error starting server: ", err)
+		fmt.Println("Error starting server: ", err)
 		return
 	}
 	defer manners.Close()
@@ -84,11 +88,11 @@ func processStopedBySignal(db *sql.DB) {
 	signal.Notify(c, syscall.SIGTSTP) // TERMINAL STOP (Ctrl+Z)
 	signal.Notify(c, syscall.SIGQUIT) // QUIT (Ctrl+\)
 	go func() {
-		log.Println("THIS PROCESS IS WAITING SIGNAL TO STOP GRACEFULLY")
+		fmt.Println("THIS PROCESS IS WAITING SIGNAL TO STOP GRACEFULLY")
 		for sig := range c {
-			log.Println("\n\nSTOPED BY SIGNAL:", sig.String())
-			log.Println("SHUTTING DOWN GRACEFULLY!")
-			log.Println("\nGod bye!")
+			fmt.Println("\n\nSTOPED BY SIGNAL:", sig.String())
+			fmt.Println("SHUTTING DOWN GRACEFULLY!")
+			fmt.Println("\nGod bye!")
 			manners.Close()
 			db.Close()
 			os.Exit(1)

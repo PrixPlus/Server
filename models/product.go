@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/prixplus/server/database"
 
@@ -16,7 +15,6 @@ type Product struct {
 	Gtin        string  `json:"gtin"`
 	Description string  `json:"description"`
 	Thumbnail   string  `json:"thumbnail"`
-	Price       float32 `json:"price"`
 	PriceAvg    float32 `json:"priceavg"`
 	PriceMax    float32 `json:"pricemax"`
 	PriceMin    float32 `json:"pricemin"`
@@ -47,37 +45,37 @@ func (p Product) Delete(tx *sql.Tx) error {
 		return errors.New(fmt.Sprintf("%d rows affected in DELETE to Product.Id %s", affect, p.Id))
 	}
 
-	log.Printf("Deleted Product %s\n", p)
+	fmt.Printf("Deleted Product %s\n", p)
 
 	return nil
 }
 
 func (p *Product) Insert(tx *sql.Tx) error {
-	query := "INSERT INTO products(gtin, description, thumbnail, price, priceavg, pricemax, pricemin) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id"
+	query := "INSERT INTO products(gtin, description, thumbnail, priceavg, pricemax, pricemin) VALUES($1,$2,$3,$4,$5,$6) RETURNING id"
 	stmt, err := database.Prepare(query, tx)
 	if err != nil {
 		return err
 	}
 
-	err = stmt.QueryRow(p.Gtin, p.Description, p.Thumbnail, p.Price, p.PriceAvg, p.PriceMax, p.PriceMin).Scan(&p.Id)
+	err = stmt.QueryRow(p.Gtin, p.Description, p.Thumbnail, p.PriceAvg, p.PriceMax, p.PriceMin).Scan(&p.Id)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Inserted Product %s\n", p)
+	fmt.Printf("Inserted Product %s\n", p)
 
 	return nil
 }
 
 // Update Product in database
 func (p Product) Update(tx *sql.Tx) error {
-	query := "UPDATE products SET gtin=$1, description=$2, thumbnail=$3, price=$4, priceavg=$5, pricemax=$6, pricemin=$7 WHERE id=$8"
+	query := "UPDATE products SET gtin=$1, description=$2, thumbnail=$3, priceavg=$4, pricemax=$5, pricemin=$6 WHERE id=$7"
 	stmt, err := database.Prepare(query, tx)
 	if err != nil {
 		return err
 	}
 
-	res, err := stmt.Exec(p.Gtin, p.Description, p.Thumbnail, p.Price, p.PriceAvg, p.PriceMax, p.PriceMin, p.Id)
+	res, err := stmt.Exec(p.Gtin, p.Description, p.Thumbnail, p.PriceAvg, p.PriceMax, p.PriceMin, p.Id)
 	if err != nil {
 		return err
 	}
@@ -91,7 +89,7 @@ func (p Product) Update(tx *sql.Tx) error {
 		return errors.New(fmt.Sprintf("%d rows affected in UPDATE to Product.Id %d", affect, p.Id))
 	}
 
-	log.Printf("Updated Product %s\n", p)
+	fmt.Printf("Updated Product %s\n", p)
 
 	return nil
 }
@@ -99,21 +97,20 @@ func (p Product) Update(tx *sql.Tx) error {
 // This method should return just one Elem or an error
 // You can get any combination of the fields
 func (p *Product) Get(tx *sql.Tx) error {
-	query := "SELECT id, gtin, description, thumbnail, price, priceavg, pricemax, pricemin FROM products WHERE " +
+	query := "SELECT id, gtin, description, thumbnail, priceavg, pricemax, pricemin FROM products WHERE " +
 		"($1=0 OR id=$1) AND " +
 		"($2='' OR gtin=$2) AND " +
 		"($3='' OR description=$3) AND " +
 		"($4='' OR thumbnail=$4) AND " +
-		"($5=0 OR price=$5) AND " +
-		"($6=0 OR priceavg=$6) AND " +
-		"($7=0 OR pricemax=$7) AND " +
-		"($8=0 OR pricemin=$8)"
+		"($6=0 OR priceavg=$5) AND " +
+		"($7=0 OR pricemax=$6) AND " +
+		"($8=0 OR pricemin=$7)"
 	stmt, err := database.Prepare(query, tx)
 	if err != nil {
 		return err
 	}
 
-	rows, err := stmt.Query(p.Id, p.Gtin, p.Description, p.Thumbnail, p.Price, p.PriceAvg, p.PriceMax, p.PriceMin)
+	rows, err := stmt.Query(p.Id, p.Gtin, p.Description, p.Thumbnail, p.PriceAvg, p.PriceMax, p.PriceMin)
 	if err != nil {
 		return err
 	}
@@ -121,7 +118,7 @@ func (p *Product) Get(tx *sql.Tx) error {
 	defer rows.Close()
 
 	if rows.Next() {
-		err := rows.Scan(&p.Id, &p.Gtin, &p.Description, &p.Thumbnail, &p.Price, &p.PriceAvg, &p.PriceMax, &p.PriceMin)
+		err := rows.Scan(&p.Id, &p.Gtin, &p.Description, &p.Thumbnail, &p.PriceAvg, &p.PriceMax, &p.PriceMin)
 		if err != nil {
 			return err
 		}
@@ -142,7 +139,7 @@ func (p *Product) Get(tx *sql.Tx) error {
 		return err
 	}
 
-	log.Printf("Geted Product %s\n", p)
+	fmt.Printf("Geted Product %s\n", p)
 
 	return nil
 }
@@ -150,15 +147,14 @@ func (p *Product) Get(tx *sql.Tx) error {
 // This method should return all Elements in db
 // equals to the Elem given
 func (p *Product) GetAll(tx *sql.Tx) ([]Product, error) {
-	query := "SELECT id, gtin, description, thumbnail, price, priceavg, pricemax, pricemin FROM products WHERE " +
+	query := "SELECT id, gtin, description, thumbnail, priceavg, pricemax, pricemin FROM products WHERE " +
 		"($1=0 OR id=$1) AND " +
 		"($2='' OR gtin=$2) AND" +
 		"($3='' OR description=$3) AND " +
 		"($4='' OR thumbnail=$4) AND " +
-		"($5=0 OR price=$5) AND " +
-		"($6=0 OR priceavg=$6) AND " +
-		"($7=0 OR pricemax=$7) AND " +
-		"($8=0 OR pricemin=$8)"
+		"($6=0 OR priceavg=$5) AND " +
+		"($7=0 OR pricemax=$6) AND " +
+		"($8=0 OR pricemin=$7)"
 
 	products := []Product{}
 
@@ -167,7 +163,7 @@ func (p *Product) GetAll(tx *sql.Tx) ([]Product, error) {
 		return products, err
 	}
 
-	rows, err := stmt.Query(p.Id, p.Gtin, p.Description, p.Thumbnail, p.Price, p.PriceAvg, p.PriceMax, p.PriceMin)
+	rows, err := stmt.Query(p.Id, p.Gtin, p.Description, p.Thumbnail, p.PriceAvg, p.PriceMax, p.PriceMin)
 	if err != nil {
 		return products, err
 	}
@@ -176,7 +172,7 @@ func (p *Product) GetAll(tx *sql.Tx) ([]Product, error) {
 
 	for rows.Next() {
 		p := Product{}
-		err = rows.Scan(&p.Id, &p.Gtin, &p.Description, &p.Thumbnail, &p.Price, &p.PriceAvg, &p.PriceMax, &p.PriceMin)
+		err = rows.Scan(&p.Id, &p.Gtin, &p.Description, &p.Thumbnail, &p.PriceAvg, &p.PriceMax, &p.PriceMin)
 		if err != nil {
 			return products, err
 		}
@@ -188,7 +184,55 @@ func (p *Product) GetAll(tx *sql.Tx) ([]Product, error) {
 		return products, err
 	}
 
-	log.Printf("Geted %d products like %s\n", len(products), p)
+	fmt.Printf("Geted %d products like %s\n", len(products), p)
+
+	return products, nil
+}
+
+// This method should return all Elements in db
+// with query like string passed
+func QueryProducts(q string, tx *sql.Tx) ([]Product, error) {
+	query := "SELECT id, gtin, description, thumbnail, priceavg, pricemax, pricemin FROM products WHERE " +
+		"($1='' OR gtin=$1) AND" +
+		"($2='' OR description LIKE $2)"
+
+	var gtin, description string
+
+	if len(q) == 13 {
+		gtin = q
+	} else if len(q) > 0 {
+		description = q
+	}
+
+	products := []Product{}
+
+	stmt, err := database.Prepare(query, tx)
+	if err != nil {
+		return products, err
+	}
+
+	rows, err := stmt.Query(gtin, description)
+	if err != nil {
+		return products, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		p := Product{}
+		err = rows.Scan(&p.Id, &p.Gtin, &p.Description, &p.Thumbnail, &p.PriceAvg, &p.PriceMax, &p.PriceMin)
+		if err != nil {
+			return products, err
+		}
+		products = append(products, p)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return products, err
+	}
+
+	fmt.Printf("Geted %d products with query %s\n", len(products), q)
 
 	return products, nil
 }

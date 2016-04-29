@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/prixplus/server/database"
 
@@ -42,7 +41,7 @@ func (u User) Delete(tx *sql.Tx) error {
 		return errors.New(fmt.Sprintf("%d rows affected in DELETE to User.Id %s", affect, u.Id))
 	}
 
-	log.Printf("Deleted User %s\n", u)
+	fmt.Printf("Deleted User %s\n", u)
 
 	return nil
 }
@@ -59,7 +58,7 @@ func (u *User) Insert(tx *sql.Tx) error {
 		return err
 	}
 
-	log.Printf("Inserted User %s\n", u)
+	fmt.Printf("Inserted User %s\n", u)
 
 	return nil
 }
@@ -86,7 +85,7 @@ func (u User) Update(tx *sql.Tx) error {
 		return errors.New(fmt.Sprintf("%d rows affected in UPDATE to User.Id %d", affect, u.Id))
 	}
 
-	log.Printf("Updated User %s\n", u)
+	fmt.Printf("Updated User %s\n", u)
 
 	return nil
 }
@@ -132,7 +131,7 @@ func (u *User) Get(tx *sql.Tx) error {
 		return err
 	}
 
-	log.Printf("Geted User %s\n", u)
+	fmt.Printf("Geted User %s\n", u)
 
 	return nil
 }
@@ -173,7 +172,7 @@ func (u *User) GetAll(tx *sql.Tx) ([]User, error) {
 		return users, err
 	}
 
-	log.Printf("Geted %d users like %s\n", len(users), u)
+	fmt.Printf("Geted %d users like %s\n", len(users), u)
 
 	return users, nil
 }

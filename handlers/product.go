@@ -16,15 +16,10 @@ import (
 func GetProductList() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		var product models.Product
+		q := c.Query("q")
+		fmt.Println("QUERYYY:", q)
 
-		err := c.BindJSON(&product)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error parsing JSON: "+err.Error()))
-			return
-		}
-
-		products, err := product.GetAll(nil) // Not using any transaction
+		products, err := models.QueryProducts(q, nil) // Not using any transaction
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error getting the products: "+err.Error()))
 			return

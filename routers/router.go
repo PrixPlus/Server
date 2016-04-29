@@ -1,8 +1,6 @@
 package routers
 
 import (
-	"log"
-
 	"github.com/gin-gonic/gin"
 	"github.com/prixplus/server/handlers"
 	"github.com/prixplus/server/middlewares"
@@ -11,14 +9,15 @@ import (
 
 // HTTP methods and status code follow REST convention
 // http://www.restapitutorial.com/lessons/httpmethods.html
-func Init() *gin.Engine {
+func Init() (*gin.Engine, error) {
 
 	sets, err := settings.Get()
 	if err != nil {
-		log.Fatal("Error getting Settings: ", err)
+		return nil, err
 	}
 
 	r := gin.New()
+
 	r.Use(gin.Logger())
 	r.Use(middlewares.Recovery())
 	r.Use(middlewares.Auth())
@@ -65,5 +64,5 @@ func Init() *gin.Engine {
 
 	}
 
-	return r
+	return r, nil
 }
