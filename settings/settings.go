@@ -2,11 +2,12 @@ package settings
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,8 +31,9 @@ type Settings struct {
 		SecretKey  string
 	}
 
-	Env string `json:-`
-	Dir string `json:-`
+	Env    string `json:-`
+	Gopath string `json:-`
+	Dir    string `json:-`
 }
 
 func (s *Settings) IsProduction() bool {
@@ -57,7 +59,7 @@ func load() (*Settings, error) {
 	filePath := gopath + "/" + env + ".json"
 	jsonFile, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error reading config file %s: %s", filePath, err.Error()))
+		return nil, errors.Wrapf(err, "Error reading config file %s", filePath)
 	}
 
 	sets = &Settings{}
@@ -67,6 +69,7 @@ func load() (*Settings, error) {
 	}
 
 	sets.Env = env
+	sets.Gopath = gopath
 	sets.Dir = dir
 
 	// If we are in Development

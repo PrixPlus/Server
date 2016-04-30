@@ -1,9 +1,10 @@
 package middlewares
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/prixplus/server/errs"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,24 +25,22 @@ func Recovery() gin.HandlerFunc {
 				return
 			}
 
-			// Ops, something goes wrong
-			// maybe bad request, or claims unauthorized...
-
-			fmt.Println("### Recovery middlewares ###")
-
 			if r != nil {
-				c.Error(errors.New(fmt.Sprintf("Panic! %s", r)))
+				c.Error(fmt.Errorf("Panic! %s", r))
 				c.Status(http.StatusInternalServerError)
 			}
 
-			status := c.Writer.Status()
-
-			c.JSON(status, gin.H{
+			// -1 == not override the current error code
+			//better than: status := c.Writer.Status()
+			c.JSON(-1, gin.H{
 				"errors": c.Errors.Errors(),
 			})
 
 		}()
 
 		c.Next()
+
+		// Logs the errors present in context
+		errs.LogContextErrors(c)
 	}
 }

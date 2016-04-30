@@ -2,11 +2,11 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/prixplus/server/database"
 
+	"github.com/pkg/errors"
 	"github.com/prixplus/server/errs"
 )
 
@@ -38,7 +38,7 @@ func (u User) Delete(tx *sql.Tx) error {
 	}
 
 	if affect != 1 {
-		return errors.New(fmt.Sprintf("%d rows affected in DELETE to User.Id %s", affect, u.Id))
+		return errors.Errorf("%d rows affected in DELETE to User.Id %s", affect, u.Id)
 	}
 
 	fmt.Printf("Deleted User %s\n", u)
@@ -60,7 +60,7 @@ func (u *User) Insert(tx *sql.Tx) error {
 
 	fmt.Printf("Inserted User %s\n", u)
 
-	return nil
+	return nil //errors.Wrap(errors.Errorf("FUUUK!"), "LOOOL")
 }
 
 // Update user in database
@@ -82,7 +82,7 @@ func (u User) Update(tx *sql.Tx) error {
 	}
 
 	if affect != 1 {
-		return errors.New(fmt.Sprintf("%d rows affected in UPDATE to User.Id %d", affect, u.Id))
+		return errors.Errorf("%d rows affected in UPDATE to User.Id %d", affect, u.Id)
 	}
 
 	fmt.Printf("Updated User %s\n", u)
@@ -123,7 +123,7 @@ func (u *User) Get(tx *sql.Tx) error {
 	// Check if this Elem returned is not unique
 	if rows.Next() {
 		*u = User{}
-		return errors.New("Element not unique")
+		return errors.Errorf("Element not unique")
 	}
 
 	err = rows.Err()

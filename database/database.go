@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	_ "github.com/lib/pq"
 	"github.com/prixplus/server/settings"
 )
@@ -14,6 +16,9 @@ var db *sql.DB
 func connect() (*sql.DB, error) {
 
 	sets, err := settings.Get()
+	if err != nil {
+		return nil, errors.Wrap(err, "Erro getting settings")
+	}
 
 	fmt.Println("Connecting to database", sets.DB.Name)
 
@@ -22,14 +27,13 @@ func connect() (*sql.DB, error) {
 
 	db, err = sql.Open("postgres", dbinfo)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Error opening database connection")
 	}
 
 	// Testing DB connection
 	err = db.Ping()
 	if err != nil {
-		fmt.Println("Error when pinging DB:", err)
-		return nil, err
+		return nil, errors.Wrap(err, "Erro pinging database")
 	}
 
 	return db, nil
@@ -45,7 +49,7 @@ func Get() (*sql.DB, error) {
 func Close() error {
 	err := db.Close()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Erro closing database")
 	}
 	db = nil
 	return nil
@@ -67,7 +71,7 @@ func Prepare(query string, tx *sql.Tx) (*sql.Stmt, error) {
 
 	db, err := Get()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Erro getting database instance")
 	}
 
 	return db.Prepare(query)

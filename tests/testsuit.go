@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prixplus/server/database"
+	"github.com/prixplus/server/errs"
 	"github.com/prixplus/server/routers"
 	"github.com/prixplus/server/settings"
 
@@ -18,6 +19,15 @@ type TestSuite struct {
 	suite.Suite
 }
 
+// If this method receive an error not nil
+// it logs the errors stack and forces the test fail
+func (t *TestSuite) NoError(err error) {
+	if err != nil {
+		errs.LogError(err)
+		t.FailNow(err.Error())
+	}
+}
+
 // SetUp the test environment
 func (t *TestSuite) SetupSuite() {
 
@@ -28,37 +38,37 @@ func (t *TestSuite) SetupSuite() {
 
 	// Load singleton settings
 	_, err := settings.Get()
-	t.Require().Nil(err, "Err initializing settings")
+	t.NoError(err)
 
 	// Init DB singleton connection
 	_, err = database.Get()
-	t.Require().Nil(err, "Err initializing database")
+	t.NoError(err)
 
 	// Routing the API
 	t.router, err = routers.Init()
-	t.Require().Nil(err, "Err initializing router")
+	t.NoError(err)
 
 	// Creating temporary schemas
 	// It will not insert nothing
 	err = CreateTempTables()
-	t.Require().Nil(err, "Err creting temporary tables")
+	t.NoError(err)
 }
 
 func (t *TestSuite) SetupTest() {
 	fmt.Println("### Initializing new Test")
 	err := InsertTestEntities()
-	t.Require().Nil(err, "Err inserting test entities")
+	t.NoError(err)
 	fmt.Println("### Starting Test")
 }
 
 func (t *TestSuite) TearDownTest() {
 	fmt.Println("### Finalizing Test")
 	err := TruncateTempTables()
-	t.Require().Nil(err, "Err truncating tables")
+	t.NoError(err)
 }
 
 func (t *TestSuite) TearDownSuite() {
 	fmt.Println("### Finalizing Test Suite")
 	err := database.Close()
-	t.Require().Nil(err, "Err closing database")
+	t.NoError(err)
 }

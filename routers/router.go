@@ -18,8 +18,8 @@ func Init() (*gin.Engine, error) {
 
 	r := gin.New()
 
-	r.Use(gin.Logger())
 	r.Use(middlewares.Recovery())
+	r.Use(gin.Logger())
 	r.Use(middlewares.Auth())
 
 	r.LoadHTMLGlob(sets.Dir + "templates/*")

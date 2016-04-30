@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/prixplus/server/models"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -76,6 +76,7 @@ func PostUser() gin.HandlerFunc {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(login.Password), bcrypt.DefaultCost)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("Error encrypting password: "+err.Error()))
+			return
 		}
 
 		user := models.User{Email: login.Email, Password: string(hashedPassword)}
@@ -89,6 +90,9 @@ func PostUser() gin.HandlerFunc {
 
 		// Not sending password, it will be omitted
 		user.Password = ""
+
+		c.AbortWithError(http.StatusInternalServerError, errors.New("Error inserting your user: "))
+		return
 
 		c.JSON(http.StatusCreated, gin.H{
 			"results": []models.User{user},

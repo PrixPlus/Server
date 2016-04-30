@@ -7,6 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/pkg/errors"
+	"github.com/prixplus/server/errs"
+
 	"github.com/prixplus/server/tests"
 
 	"github.com/braintree/manners"
@@ -22,14 +25,14 @@ func main() {
 	// Load singleton settings
 	sets, err := settings.Get()
 	if err != nil {
-		fmt.Println("Error loading settings: ", err)
+		errs.LogError(errors.Wrap(err, "Error getting settings"))
 		return
 	}
 
 	// Init DB singleton connection
 	db, err := database.Get()
 	if err != nil {
-		fmt.Println("Error initializing DB: ", err)
+		errs.LogError(errors.Wrap(err, "Error getting database"))
 		return
 	}
 
@@ -41,12 +44,12 @@ func main() {
 	if !sets.IsProduction() {
 		err = tests.CreateTempTables()
 		if err != nil {
-			fmt.Println("Error creating temporary schemas: ", err)
+			errs.LogError(errors.Wrap(err, "Error creating temporary schemas"))
 			return
 		}
 		err = tests.InsertTestEntities()
 		if err != nil {
-			fmt.Println("Error creating tests entities: ", err)
+			errs.LogError(errors.Wrap(err, "Error creating tests entities"))
 			return
 		}
 	}
@@ -57,7 +60,7 @@ func main() {
 	// Init router
 	router, err := routers.Init()
 	if err != nil {
-		fmt.Println("Error initializing router: ", err)
+		errs.LogError(errors.Wrap(err, "Error initializing router"))
 		return
 	}
 
@@ -67,7 +70,7 @@ func main() {
 	// Manners allows you to shut your Go webserver down gracefully, without dropping any requests
 	err = manners.ListenAndServe(":8080", router)
 	if err != nil {
-		fmt.Println("Error starting server: ", err)
+		errs.LogError(errors.Wrap(err, "Error starting server"))
 		return
 	}
 	defer manners.Close()
