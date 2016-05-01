@@ -12,17 +12,17 @@ func CreateTempTables() error {
 	for _, sql := range testTables {
 		_, err := database.Exec(sql)
 		if err != nil {
-			return errors.Wrap(err, "Error creating temporary tables")
+			return errors.Wrap(err, "creating temporary tables")
 		}
 	}
 	return nil
 }
 
-func TruncateTempTables() error {
+func DropTempTables() error {
 	for table, _ := range testTables {
-		_, err := database.Exec("TRUNCATE TABLE " + table)
+		_, err := database.Exec("DROP TABLE IF EXISTS " + table + " CASCADE")
 		if err != nil {
-			return errors.Wrap(err, "Error truncating temporary tables")
+			return errors.Wrap(err, "removing temporary tables")
 		}
 	}
 	return nil
@@ -33,7 +33,7 @@ func InsertTestEntities() error {
 	for _, e := range testEntities {
 		err := e.Insert(nil)
 		if err != nil {
-			return errors.Wrapf(err, "Error inserting temporary entity: %#v", e)
+			return errors.Wrapf(err, "inserting temporary entity: %#v", e)
 		}
 	}
 	return nil

@@ -12,7 +12,12 @@ import (
 )
 
 func LogContextErrors(c *gin.Context) {
+	// Do nothing if there is no errors in this context
+	if len(c.Errors) == 0 {
+		return
+	}
 
+	// If there is errors in context, lets log them all
 	fmt.Println("---------- ERROR ----------")
 
 	f, err := getLogErrorFile()

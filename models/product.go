@@ -2,8 +2,9 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/prixplus/server/database"
 
@@ -102,9 +103,9 @@ func (p *Product) Get(tx *sql.Tx) error {
 		"($2='' OR gtin=$2) AND " +
 		"($3='' OR description=$3) AND " +
 		"($4='' OR thumbnail=$4) AND " +
-		"($6=0 OR priceavg=$5) AND " +
-		"($7=0 OR pricemax=$6) AND " +
-		"($8=0 OR pricemin=$7)"
+		"($5=0 OR priceavg=$5) AND " +
+		"($6=0 OR pricemax=$6) AND " +
+		"($7=0 OR pricemin=$7)"
 	stmt, err := database.Prepare(query, tx)
 	if err != nil {
 		return err
@@ -152,9 +153,9 @@ func (p *Product) GetAll(tx *sql.Tx) ([]Product, error) {
 		"($2='' OR gtin=$2) AND" +
 		"($3='' OR description=$3) AND " +
 		"($4='' OR thumbnail=$4) AND " +
-		"($6=0 OR priceavg=$5) AND " +
-		"($7=0 OR pricemax=$6) AND " +
-		"($8=0 OR pricemin=$7)"
+		"($5=0 OR priceavg=$5) AND " +
+		"($6=0 OR pricemax=$6) AND " +
+		"($7=0 OR pricemin=$7)"
 
 	products := []Product{}
 

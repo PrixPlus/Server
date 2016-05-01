@@ -21,6 +21,8 @@ type TestSuite struct {
 
 // If this method receive an error not nil
 // it logs the errors stack and forces the test fail
+// It is important to handle errors using err.LogError
+// because it will print all the stack trace returned
 func (t *TestSuite) NoError(err error) {
 	if err != nil {
 		errs.LogError(err)
@@ -47,23 +49,20 @@ func (t *TestSuite) SetupSuite() {
 	// Routing the API
 	t.router, err = routers.Init()
 	t.NoError(err)
-
-	// Creating temporary schemas
-	// It will not insert nothing
-	err = CreateTempTables()
-	t.NoError(err)
 }
 
 func (t *TestSuite) SetupTest() {
 	fmt.Println("### Initializing new Test")
-	err := InsertTestEntities()
+	err := CreateTempTables()
+	t.NoError(err)
+	err = InsertTestEntities()
 	t.NoError(err)
 	fmt.Println("### Starting Test")
 }
 
 func (t *TestSuite) TearDownTest() {
 	fmt.Println("### Finalizing Test")
-	err := TruncateTempTables()
+	err := DropTempTables()
 	t.NoError(err)
 }
 

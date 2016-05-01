@@ -20,7 +20,9 @@ func GetMe() gin.HandlerFunc {
 		// with a valid auth token
 		sessionId, ok := c.Get("id")
 		if !ok {
-			c.AbortWithError(http.StatusUnauthorized, errors.New("This resource is just for authenticated users"))
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"messages": []string{"This resource is just for authenticated users"},
+			})
 			return
 		}
 		uId := sessionId.(int64)
@@ -56,7 +58,9 @@ func PostUser() gin.HandlerFunc {
 		}
 
 		if len(login.Email) == 0 || len(login.Password) == 0 {
-			c.AbortWithError(http.StatusBadRequest, errors.New("Email or Password can not be empty"))
+			c.JSON(http.StatusBadRequest, gin.H{
+				"messages": []string{"Email or Password can not be empty"},
+			})
 			return
 		}
 
@@ -69,7 +73,9 @@ func PostUser() gin.HandlerFunc {
 		}
 
 		if len(users) > 0 {
-			c.AbortWithError(http.StatusConflict, errors.New("Sorry, email "+login.Email+" already taken"))
+			c.JSON(http.StatusConflict, gin.H{
+				"messages": []string{"Sorry, email " + login.Email + " already in use"},
+			})
 			return
 		}
 
@@ -91,9 +97,6 @@ func PostUser() gin.HandlerFunc {
 		// Not sending password, it will be omitted
 		user.Password = ""
 
-		c.AbortWithError(http.StatusInternalServerError, errors.New("Error inserting your user: "))
-		return
-
 		c.JSON(http.StatusCreated, gin.H{
 			"results": []models.User{user},
 		})
@@ -108,7 +111,9 @@ func PutUser() gin.HandlerFunc {
 		// with a valid auth token
 		sessionId, ok := c.Get("id")
 		if !ok {
-			c.AbortWithError(http.StatusUnauthorized, errors.New("This resource is just for authenticated users"))
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"messages": []string{"This resource is just for authenticated users"},
+			})
 			return
 		}
 		uId := sessionId.(int64)
