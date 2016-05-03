@@ -17,10 +17,10 @@ var testTables = map[string]string{
 var testLogin = &models.Login{Email: "test@test.com", Password: "123456"}
 
 // Expire date for the generated testToken
-var testTokenExpire, _ = time.Parse(time.RFC3339Nano, "2114-11-24T03:10:03.951466305-03:00")
+var testTokenExpire, _ = time.Parse(time.RFC3339Nano, "2500-01-01T00:00:00.000000000-03:00")
 
 // Token for the testUser valid for 100 years
-var testToken = &models.Token{Raw: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjQ1NzI0ODI1MzgsImlkIjoxfQ.VWRWQZJRA_oH8bYCcxTHYwXs6PEvBkNcxSPVrK7Be4uUztzW8IShOWP-wDwScL4PW4fyeGl3bujyRWoPANQFnA", Expire: testTokenExpire}
+var testToken = &models.Token{Raw: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzI1MjM2NDAwLCJ1aWQiOjF9.0oJlPNyM5LXeRUK89lLBFjAzbehqpzXFKu6bsM5GXGBIw7bTnkcOGcq530T3sWXnrKAp7qV983Cvu5syyfpCCQ", Expire: testTokenExpire}
 
 // User Email: "test@test.com", Password: "123456" (in hash)
 var testUser = &models.User{Email: "test@test.com", Password: "$2a$10$tisC/y*atxRhEIPNPAgH.yexTuPpGQ4BRAqsVrGViteXPsPDpe1Mx2"}

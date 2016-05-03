@@ -1,9 +1,9 @@
 package middlewares
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
+
+	"github.com/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prixplus/server/auth"
@@ -26,32 +26,34 @@ func Auth() gin.HandlerFunc {
 
 		// The first word of Authorization header should be Bearer
 		if len(header) < 6 || header[0:7] != "Bearer " {
-			c.AbortWithError(http.StatusBadRequest, errors.New("Invalid auth header"))
+			c.AbortWithError(http.StatusBadRequest, errors.New("invalid auth header"))
 			return
 		}
 
 		token, err := auth.ParseToken(header[7:])
 		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, errors.New("Error in token: "+err.Error()))
+			c.AbortWithError(http.StatusBadRequest, errors.Wrap(err, "parsing token"))
 			return
 		}
 
 		// Check in DB if token user still logged
 		// maybe user logout
 
-		id, ok := token.Claims["id"] // Id comming by float64 !?
+		uid, ok := token.Claims["uid"] // uid comming by float64 !?
 		if !ok {
-			c.AbortWithError(http.StatusBadRequest, errors.New(fmt.Sprintf("Ivalid token provided, id not found: %v, Claims: %#v", id, token.Claims)))
+			c.AbortWithError(http.StatusBadRequest, errors.Errorf("uid not found int token provided"))
 			return
 		}
 
-		idFloat64, ok := id.(float64)
+		// This step is just necessary
+		// because for some reason uid is stored as float
+		idFloat64, ok := uid.(float64)
 		if !ok {
-			c.AbortWithError(http.StatusBadRequest, errors.New("Error casting Claims"))
+			c.AbortWithError(http.StatusBadRequest, errors.New("casting uid to float64"))
 			return
 		}
 
-		c.Set("id", int64(idFloat64))
+		c.Set("uid", int64(idFloat64))
 
 		c.Next()
 	}

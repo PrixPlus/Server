@@ -17,12 +17,11 @@ type ProductSuite struct {
 }
 
 func TestProductSuite(t *testing.T) {
-	fmt.Println("### Running Product Suit")
 	suite.Run(t, new(ProductSuite))
 }
 
 // Tests [GET] /api/products/:ID method using testProduct
-func (t *ProductSuite) TestGetProduct() {
+func (t *ProductSuite) xTestGetProduct() {
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("/api/products/%d", testProduct.Id), nil)
 	t.NoError(err)
@@ -41,7 +40,7 @@ func (t *ProductSuite) TestGetProduct() {
 }
 
 // Tests [GET] /api/products
-func (t *ProductSuite) TestGetProductList() {
+func (t *ProductSuite) xTestGetProductList() {
 
 	req, err := http.NewRequest("GET", "/api/products", nil)
 	t.NoError(err)
@@ -60,7 +59,7 @@ func (t *ProductSuite) TestGetProductList() {
 }
 
 // Tests [POST] /api/products using a brand new product
-func (t *ProductSuite) TestCreateProduct() {
+func (t *ProductSuite) xTestCreateProduct() {
 
 	// Creating a new user using this email and pass
 	product := &models.Product{Gtin: "0000123456789", Description: "BRAND NEW PRODUCT", Thumbnail: "https://s3.amazonaws.com/pictures/products/123456789/kspzwgow", PriceAvg: 1.52, PriceMax: 2.31, PriceMin: 1.10}
@@ -87,8 +86,8 @@ func (t *ProductSuite) TestCreateProduct() {
 	t.Require().Len(products, 1, "not returned just 1 product")
 }
 
-// Tests [PUT] User using testToken and modifying the testUser
-func (t *ProductSuite) TestModifyUser() {
+// Tests [PUT] /api/products/:id using testToken and modifying the testProduct
+func (t *ProductSuite) TestModifyProduct() {
 
 	modifiedProduct := &models.Product{}
 
@@ -116,3 +115,28 @@ func (t *ProductSuite) TestModifyUser() {
 	t.Require().Len(products, 1, "not returned just 1 product")
 	t.Require().Equal(modifiedProduct, products[0], "product modfied should be equals to the product sent")
 }
+
+/*
+// TODO !!!
+
+// Tests [DELET] /api/products/:id using testToken and testProduct
+func (t *ProductSuite) TestDeletProduct() {
+
+	// Test Refresh Token!
+	req, err := http.NewRequest("PUT", fmt.Sprintf("/api/products/%d", testProduct.Id), nil)
+	t.NoError(err)
+	req.Header.Add("Authorization", "Bearer "+testToken.Raw)
+	resp := httptest.NewRecorder()
+	t.router.ServeHTTP(resp, req)
+	t.Require().Equal(http.StatusOK, resp.Code, "response code should be OK (200). Body: %s", string(resp.Body.Bytes()))
+
+	var data map[string][]*models.Product
+	err = json.Unmarshal(resp.Body.Bytes(), &data)
+	t.NoError(err)
+
+	products, ok := data["results"]
+	t.Require().Equal(ok, true, "results not found in response")
+	t.Require().Len(products, 1, "not returned just 1 product")
+	t.Require().Equal(modifiedProduct, products[0], "product modfied should be equals to the product sent")
+}
+*/

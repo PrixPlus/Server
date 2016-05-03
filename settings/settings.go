@@ -30,6 +30,7 @@ type Settings struct {
 		Expiration time.Duration
 		SecretKey  string
 	}
+	LogFile string
 
 	Env    string `json:-`
 	Gopath string `json:-`
@@ -59,18 +60,23 @@ func load() (*Settings, error) {
 	filePath := gopath + "/" + env + ".json"
 	jsonFile, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error reading config file %s", filePath)
+		return nil, errors.Wrapf(err, "reading config file %s", filePath)
 	}
 
 	sets = &Settings{}
-	jsonErr := json.Unmarshal(jsonFile, &sets)
-	if jsonErr != nil {
-		return nil, errors.New(fmt.Sprintf("Error while parsing config file: %s", jsonErr.Error()))
+	err = json.Unmarshal(jsonFile, &sets)
+	if err != nil {
+		return nil, errors.Wrap(err, "while parsing config file")
 	}
 
 	sets.Env = env
 	sets.Gopath = gopath
 	sets.Dir = dir
+
+	// Ensure that will ever exist the LogFile
+	if len(sets.LogFile) == 0 {
+		sets.LogFile = "errs.log"
+	}
 
 	// If we are in Development
 	// so we will set GIN to DebugMode

@@ -4,13 +4,13 @@ package tests
 import (
 	"github.com/pkg/errors"
 
-	"github.com/prixplus/server/database"
+	"github.com/prixplus/server/db"
 )
 
 // Creating temporary test schemas
 func CreateTempTables() error {
 	for _, sql := range testTables {
-		_, err := database.Exec(sql)
+		_, err := db.Exec(sql)
 		if err != nil {
 			return errors.Wrap(err, "creating temporary tables")
 		}
@@ -18,9 +18,9 @@ func CreateTempTables() error {
 	return nil
 }
 
-func DropTempTables() error {
+func DropTempTablesIfExist() error {
 	for table, _ := range testTables {
-		_, err := database.Exec("DROP TABLE IF EXISTS " + table + " CASCADE")
+		_, err := db.Exec("DROP TABLE IF EXISTS " + table + " CASCADE")
 		if err != nil {
 			return errors.Wrap(err, "removing temporary tables")
 		}

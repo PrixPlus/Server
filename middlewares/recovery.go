@@ -1,8 +1,9 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/pkg/errors"
 
 	"github.com/prixplus/server/errs"
 
@@ -19,28 +20,27 @@ func Recovery() gin.HandlerFunc {
 		defer func() {
 			r := recover()
 
-			// Test if everything is fine
-			// it means request wasn't aborted and didn't go into panic
+			// Tests if has not had any error in this request
+			// it means that request wasn't aborted and stack didn't go in panic
 			if r == nil && !c.IsAborted() {
 				return
 			}
 
 			if r != nil {
-				c.Error(fmt.Errorf("Panic! %s", r))
-				c.Status(http.StatusInternalServerError)
+				c.AbortWithError(http.StatusInternalServerError, errors.Errorf("Panic! %s", r))
 			}
 
-			// -1 == not override the current error code
-			//better than: status := c.Writer.Status()
+			// Status code -1 == do not override the current status code
 			c.JSON(-1, gin.H{
 				"errors": c.Errors.Errors(),
 			})
 
 		}()
 
+		// Process all next handlers
 		c.Next()
 
-		// Logs the errors present in context
+		// Logs errors presents in context, if there is any
 		errs.LogContextErrors(c)
 	}
 }

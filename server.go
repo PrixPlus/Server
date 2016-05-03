@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"os/signal"
@@ -13,7 +12,7 @@ import (
 	"github.com/prixplus/server/tests"
 
 	"github.com/braintree/manners"
-	"github.com/prixplus/server/database"
+	"github.com/prixplus/server/db"
 	"github.com/prixplus/server/routers"
 	"github.com/prixplus/server/settings"
 )
@@ -25,14 +24,14 @@ func main() {
 	// Load singleton settings
 	sets, err := settings.Get()
 	if err != nil {
-		errs.LogError(errors.Wrap(err, "Error getting settings"))
+		errs.LogError(errors.Wrap(err, "getting settings"))
 		return
 	}
 
 	// Init DB singleton connection
-	db, err := database.Get()
+	_, err = db.Get()
 	if err != nil {
-		errs.LogError(errors.Wrap(err, "Error getting database"))
+		errs.LogError(errors.Wrap(err, "getting db"))
 		return
 	}
 
@@ -44,12 +43,12 @@ func main() {
 	if !sets.IsProduction() {
 		err = tests.CreateTempTables()
 		if err != nil {
-			errs.LogError(errors.Wrap(err, "Error creating temporary schemas"))
+			errs.LogError(errors.Wrap(err, "creating temporary schemas"))
 			return
 		}
 		err = tests.InsertTestEntities()
 		if err != nil {
-			errs.LogError(errors.Wrap(err, "Error creating tests entities"))
+			errs.LogError(errors.Wrap(err, "creating tests entities"))
 			return
 		}
 	}
@@ -60,17 +59,17 @@ func main() {
 	// Init router
 	router, err := routers.Init()
 	if err != nil {
-		errs.LogError(errors.Wrap(err, "Error initializing router"))
+		errs.LogError(errors.Wrap(err, "initializing router"))
 		return
 	}
 
 	// Shut the server down gracefully
-	processStopedBySignal(db)
+	processStopedBySignal()
 
 	// Manners allows you to shut your Go webserver down gracefully, without dropping any requests
 	err = manners.ListenAndServe(":8080", router)
 	if err != nil {
-		errs.LogError(errors.Wrap(err, "Error starting server"))
+		errs.LogError(errors.Wrap(err, "starting server"))
 		return
 	}
 	defer manners.Close()
@@ -78,7 +77,7 @@ func main() {
 }
 
 // Shut the server down gracefully if receive a interrupt signal
-func processStopedBySignal(db *sql.DB) {
+func processStopedBySignal() {
 	// Stop server if someone kills the process
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

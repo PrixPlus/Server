@@ -1,7 +1,9 @@
 package models
 
-import "database/sql"
+import (
+	"github.com/jmoiron/sqlx"
+)
 
 type Inserter interface {
-	Insert(tx *sql.Tx) error
+	Insert(tx *sqlx.Tx) error
 }

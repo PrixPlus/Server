@@ -11,6 +11,12 @@ import (
 	"github.com/prixplus/server/settings"
 )
 
+// Interface for errors used in github.com/pkg/errors
+type ErrorLocation interface {
+	Location() (string, int)
+	error // It still an error
+}
+
 func LogContextErrors(c *gin.Context) {
 	// Do nothing if there is no errors in this context
 	if len(c.Errors) == 0 {
@@ -19,10 +25,11 @@ func LogContextErrors(c *gin.Context) {
 
 	// If there is errors in context, lets log them all
 	fmt.Println("---------- ERROR ----------")
+	defer fmt.Println("---------------------------")
 
 	f, err := getLogErrorFile()
 	if err != nil {
-		fmt.Printf("Error openning error log file: %s", err)
+		errors.Fprint(os.Stdout, errors.Wrap(err, "openning error log file"))
 		return
 	}
 	defer f.Close()
@@ -30,23 +37,23 @@ func LogContextErrors(c *gin.Context) {
 	t := time.Now()
 	l := fmt.Sprintf("%s - [%s] %s - IP: %s\n", t.Format(time.Stamp), c.Request.Method, c.Request.URL.String(), c.ClientIP())
 	f.WriteString(l)
-	fmt.Printf(l)
+	fmt.Println(l)
 
 	for _, e := range c.Errors {
 		errors.Fprint(f, e.Err)
 		errors.Fprint(os.Stdout, e.Err)
 	}
 
-	fmt.Println("---------------------------")
 }
 
 func LogError(e error) {
 
 	fmt.Println("---------- ERROR ----------")
+	defer fmt.Println("---------------------------")
 
 	f, err := getLogErrorFile()
 	if err != nil {
-		fmt.Printf("Error openning error log file: %s\n", err)
+		errors.Fprint(os.Stdout, errors.Wrap(err, "openning error log file"))
 		return
 	}
 	defer f.Close()
@@ -58,18 +65,16 @@ func LogError(e error) {
 
 	errors.Fprint(f, e)
 	errors.Fprint(os.Stdout, e)
-
-	fmt.Println("---------------------------")
 }
 
 func getLogErrorFile() (*os.File, error) {
 
 	sets, err := settings.Get()
 	if err != nil {
-		return nil, errors.Wrap(err, "Error getting settings")
+		return nil, errors.Wrap(err, "getting settings")
 	}
 
-	filename := sets.Gopath + "/errs.log"
+	filename := sets.Gopath + "/" + sets.LogFile
 
 	return os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 }

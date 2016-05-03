@@ -2,6 +2,7 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/prixplus/server/handlers"
 	"github.com/prixplus/server/middlewares"
 	"github.com/prixplus/server/settings"
@@ -13,7 +14,7 @@ func Init() (*gin.Engine, error) {
 
 	sets, err := settings.Get()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "getting settings")
 	}
 
 	r := gin.New()

@@ -17,7 +17,6 @@ type UserSuite struct {
 }
 
 func TestUserSuite(t *testing.T) {
-	fmt.Println("### Running User Suit")
 	suite.Run(t, new(UserSuite))
 }
 

@@ -3,9 +3,11 @@ package errs
 import "errors"
 
 var (
-	ElementNotFound = errors.New("Element not found")
+	ElemNotFound  = errors.New("Element not found")
+	ElemNotUnique = errors.New("Element not unique")
 )
 
 var Status = map[error]int{
-	ElementNotFound: 471,
+	ElemNotFound:  471,
+	ElemNotUnique: 472,
 }

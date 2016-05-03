@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/pkg/errors"
 
 	"github.com/prixplus/server/errs"
 
@@ -21,7 +22,7 @@ func GetProductList() gin.HandlerFunc {
 
 		products, err := models.QueryProducts(q, nil) // Not using any transaction
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error getting the products: "+err.Error()))
+			c.AbortWithError(http.StatusInternalServerError, errors.Wrap(err, "getting the products"))
 			return
 		}
 
@@ -31,30 +32,30 @@ func GetProductList() gin.HandlerFunc {
 	}
 }
 
-// Get a list of products like the given product info
+// Get one Product with the given Id
 func GetProduct() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		id, err := strconv.ParseInt(c.Param("id"), 10, 32)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error converting product Id: "+err.Error()))
+			c.AbortWithError(http.StatusBadRequest, errors.Wrap(err, "id isn't a valid integer"))
 			return
 		}
 
 		product := &models.Product{Id: id}
 		products, err := product.GetAll(nil) // Not using any transaction
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error getting the products: "+err.Error()))
+			c.AbortWithError(http.StatusInternalServerError, errors.Wrap(err, "getting the products"))
 			return
 		}
 
 		if len(products) == 0 {
-			c.AbortWithError(errs.Status[errs.ElementNotFound], errs.ElementNotFound)
+			c.AbortWithError(errs.Status[errs.ElemNotFound], errors.Wrapf(errs.ElemNotFound, "product not found with id %s", id))
 			return
 		}
 
 		if len(products) > 1 {
-			c.AbortWithError(http.StatusConflict, errors.New("Sorry but we've found more than one product with this Id.."))
+			c.AbortWithError(errs.Status[errs.ElemNotUnique], errors.Wrapf(errs.ElemNotUnique, "more than one product with id %s", id))
 			return
 		}
 
@@ -73,7 +74,7 @@ func PostProduct() gin.HandlerFunc {
 
 		err := c.BindJSON(&product)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error parsing JSON: "+err.Error()))
+			c.AbortWithError(http.StatusBadRequest, errors.Wrap(err, "parsing product JSON"))
 			return
 		}
 
@@ -81,18 +82,18 @@ func PostProduct() gin.HandlerFunc {
 		p := models.Product{Gtin: product.Gtin}
 		products, err := p.GetAll(nil) // Not using any transaction
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error getting the products: "+err.Error()))
+			c.AbortWithError(http.StatusInternalServerError, errors.Wrap(err, "getting the products"))
 			return
 		}
 
 		if len(products) > 0 {
-			c.AbortWithError(http.StatusConflict, errors.New("Sorry, product with GTIN "+product.Gtin+" already exist"))
+			c.AbortWithError(http.StatusConflict, errors.Wrap(err, "product with GTIN "+product.Gtin+" already exist"))
 			return
 		}
 
 		err = product.Insert(nil) // Not using any transaction
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error inserting the product: "+err.Error()))
+			c.AbortWithError(http.StatusInternalServerError, errors.Wrap(err, "inserting the product"))
 			return
 		}
 
@@ -104,34 +105,35 @@ func PostProduct() gin.HandlerFunc {
 	}
 }
 
-// Update an User
+// Update one Product
+// This route just work for Gtin and Description
 func PutProduct() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		var product models.Product
-
-		err := c.BindJSON(&product)
+		id, err := strconv.ParseInt(c.Param("id"), 10, 32)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error parsing JSON: "+err.Error()))
+			c.AbortWithError(http.StatusBadRequest, errors.Wrap(err, "converting id from parameters"))
 			return
 		}
 
-		id, err := strconv.ParseInt(c.Param("id"), 10, 32)
+		var product models.Product
+
+		err = c.BindJSON(&product)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error converting product Id: "+err.Error()))
+			c.AbortWithError(http.StatusBadRequest, errors.Wrap(err, "parsing product JSON"))
 			return
 		}
 
 		// Check if user isn't trying to modify another product
 		if product.Id != 0 && product.Id != id {
-			c.AbortWithError(http.StatusUnauthorized, errors.New("You can't update other users info"))
+			c.AbortWithError(http.StatusBadRequest, errors.Wrapf(err, "you can't modify product id %d in the route for product id %d", product.Id, id))
 			return
 		}
 
 		productSaved := models.Product{Id: id}
 		err = productSaved.Get(nil) // Not using any transaction
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error getting the product like "+productSaved.String()+": "+err.Error()))
+			c.AbortWithError(http.StatusInternalServerError, errors.Wrap(err, "getting the product "+productSaved.String()))
 			return
 		}
 
@@ -147,7 +149,7 @@ func PutProduct() gin.HandlerFunc {
 
 		err = productSaved.Update(nil) // Not using any transaction
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, errors.New("Error updating product: "+err.Error()))
+			c.AbortWithError(http.StatusInternalServerError, errors.Wrap(err, "updating product"))
 			return
 		}
 

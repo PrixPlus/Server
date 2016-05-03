@@ -1,14 +1,16 @@
 package models
 
 import (
-	"database/sql"
-	"fmt"
-
-	"github.com/pkg/errors"
-
-	"github.com/prixplus/server/database"
+	"encoding/json"
+	"strconv"
 
 	"github.com/prixplus/server/errs"
+
+	"github.com/prixplus/server/db"
+
+	"github.com/jmoiron/sqlx"
+
+	"github.com/pkg/errors"
 )
 
 type Product struct {
@@ -22,218 +24,151 @@ type Product struct {
 }
 
 func (p Product) String() string {
-	return fmt.Sprintf("Product<%d %v %v>", p.Id, p.Gtin, p.Description)
+	s, err := json.Marshal(p)
+	if err != nil { // Just log the error
+		errs.LogError(errors.Wrap(err, "encoding json"))
+	}
+
+	return string(s)
 }
 
-func (p Product) Delete(tx *sql.Tx) error {
-	query := "DELETE FROM products WHERE id=$1"
-	stmt, err := database.Prepare(query, tx)
+func (p Product) Delete(tx *sqlx.Tx) error {
+	query := "DELETE FROM products WHERE id=:id"
+	stmt, err := db.PrepareNamed(query, tx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "preparing named query")
 	}
 
-	res, err := stmt.Exec(p.Id)
+	_, err = stmt.Exec(p)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "executing named query")
 	}
 
-	affect, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if affect != 1 {
-		return errors.New(fmt.Sprintf("%d rows affected in DELETE to Product.Id %s", affect, p.Id))
-	}
-
-	fmt.Printf("Deleted Product %s\n", p)
-
+	// fmt.Printf("Product deleted %s\n", p)
 	return nil
 }
 
-func (p *Product) Insert(tx *sql.Tx) error {
-	query := "INSERT INTO products(gtin, description, thumbnail, priceavg, pricemax, pricemin) VALUES($1,$2,$3,$4,$5,$6) RETURNING id"
-	stmt, err := database.Prepare(query, tx)
+func (p *Product) Insert(tx *sqlx.Tx) error {
+	query := "INSERT INTO " +
+		"products(gtin, description, thumbnail, priceavg, pricemax, pricemin) " +
+		"VALUES(:gtin, :description, :thumbnail, :priceavg, :pricemax, :pricemin) " +
+		"RETURNING id"
+	stmt, err := db.PrepareNamed(query, tx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "preparing named query")
 	}
 
-	err = stmt.QueryRow(p.Gtin, p.Description, p.Thumbnail, p.PriceAvg, p.PriceMax, p.PriceMin).Scan(&p.Id)
+	err = stmt.QueryRowx(p).StructScan(p)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "scanning a product")
 	}
 
-	fmt.Printf("Inserted Product %s\n", p)
-
+	// fmt.Printf("Product inserted %s\n", p)
 	return nil
 }
 
-// Update Product in database
-func (p Product) Update(tx *sql.Tx) error {
-	query := "UPDATE products SET gtin=$1, description=$2, thumbnail=$3, priceavg=$4, pricemax=$5, pricemin=$6 WHERE id=$7"
-	stmt, err := database.Prepare(query, tx)
+// Update Product in databae
+func (p Product) Update(tx *sqlx.Tx) error {
+	query := "UPDATE products SET gtin=:gtin, description=:description, thumbnail=:thumbnail, priceavg=:priceavg, pricemax=:pricemax, pricemin=:pricemin WHERE id=:id"
+	stmt, err := db.PrepareNamed(query, tx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "preparing named query")
 	}
 
-	res, err := stmt.Exec(p.Gtin, p.Description, p.Thumbnail, p.PriceAvg, p.PriceMax, p.PriceMin, p.Id)
+	_, err = stmt.Exec(p)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "executing named query")
 	}
 
-	affect, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if affect != 1 {
-		return errors.New(fmt.Sprintf("%d rows affected in UPDATE to Product.Id %d", affect, p.Id))
-	}
-
-	fmt.Printf("Updated Product %s\n", p)
-
+	// fmt.Printf("Product updated %s\n", p)
 	return nil
 }
 
 // This method should return just one Elem or an error
 // You can get any combination of the fields
-func (p *Product) Get(tx *sql.Tx) error {
-	query := "SELECT id, gtin, description, thumbnail, priceavg, pricemax, pricemin FROM products WHERE " +
-		"($1=0 OR id=$1) AND " +
-		"($2='' OR gtin=$2) AND " +
-		"($3='' OR description=$3) AND " +
-		"($4='' OR thumbnail=$4) AND " +
-		"($5=0 OR priceavg=$5) AND " +
-		"($6=0 OR pricemax=$6) AND " +
-		"($7=0 OR pricemin=$7)"
-	stmt, err := database.Prepare(query, tx)
+func (p *Product) Get(tx *sqlx.Tx) error {
+	query := "SELECT * FROM products WHERE " +
+		"(:id=0 OR id=:id) AND " +
+		"(:gtin='' OR gtin=:gtin) AND " +
+		"(:description='' OR description=:description) AND " +
+		"(:thumbnail='' OR thumbnail=:thumbnail) AND " +
+		"(:priceavg=0 OR priceavg=:priceavg) AND " +
+		"(:pricemax=0 OR pricemax=:pricemax) AND " +
+		"(:pricemin=0 OR pricemin=:pricemin)"
+	stmt, err := db.PrepareNamed(query, tx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "preparing named query")
 	}
 
-	rows, err := stmt.Query(p.Id, p.Gtin, p.Description, p.Thumbnail, p.PriceAvg, p.PriceMax, p.PriceMin)
+	err = stmt.Get(p, p)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "getting the product")
 	}
 
-	defer rows.Close()
-
-	if rows.Next() {
-		err := rows.Scan(&p.Id, &p.Gtin, &p.Description, &p.Thumbnail, &p.PriceAvg, &p.PriceMax, &p.PriceMin)
-		if err != nil {
-			return err
-		}
-	} else {
-		// Product not found, clear the reference
-		*p = Product{}
-		return errs.ElementNotFound
-	}
-
-	// Check if this Elem returned is not unique
-	if rows.Next() {
-		*p = Product{}
-		return errors.New("Element not unique")
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Geted Product %s\n", p)
-
+	// fmt.Printf("Product geted %s\n", p)
 	return nil
 }
 
 // This method should return all Elements in db
 // equals to the Elem given
-func (p *Product) GetAll(tx *sql.Tx) ([]Product, error) {
-	query := "SELECT id, gtin, description, thumbnail, priceavg, pricemax, pricemin FROM products WHERE " +
-		"($1=0 OR id=$1) AND " +
-		"($2='' OR gtin=$2) AND" +
-		"($3='' OR description=$3) AND " +
-		"($4='' OR thumbnail=$4) AND " +
-		"($5=0 OR priceavg=$5) AND " +
-		"($6=0 OR pricemax=$6) AND " +
-		"($7=0 OR pricemin=$7)"
+func (p *Product) GetAll(tx *sqlx.Tx) ([]Product, error) {
+	query := "SELECT * FROM products WHERE " +
+		"(:id=0 OR id=:id) AND " +
+		"(:gtin='' OR gtin=:gtin) AND" +
+		"(:description='' OR description=:description) AND " +
+		"(:thumbnail='' OR thumbnail=:thumbnail) AND " +
+		"(:priceavg=0 OR priceavg=:priceavg) AND " +
+		"(:pricemax=0 OR pricemax=:pricemax) AND " +
+		"(:pricemin=0 OR pricemin=:pricemin)"
 
 	products := []Product{}
 
-	stmt, err := database.Prepare(query, tx)
+	stmt, err := db.PrepareNamed(query, tx)
 	if err != nil {
-		return products, err
+		return products, errors.Wrap(err, "preparing named query")
 	}
 
-	rows, err := stmt.Query(p.Id, p.Gtin, p.Description, p.Thumbnail, p.PriceAvg, p.PriceMax, p.PriceMin)
+	err = stmt.Select(&products, p)
 	if err != nil {
-		return products, err
+		return products, errors.Wrap(err, "selecting products")
 	}
 
-	defer rows.Close()
-
-	for rows.Next() {
-		p := Product{}
-		err = rows.Scan(&p.Id, &p.Gtin, &p.Description, &p.Thumbnail, &p.PriceAvg, &p.PriceMax, &p.PriceMin)
-		if err != nil {
-			return products, err
-		}
-		products = append(products, p)
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return products, err
-	}
-
-	fmt.Printf("Geted %d products like %s\n", len(products), p)
-
+	// fmt.Printf("%d Products geted like %s\n", len(products), p)
 	return products, nil
 }
 
-// This method should return all Elements in db
-// with query like string passed
-func QueryProducts(q string, tx *sql.Tx) ([]Product, error) {
-	query := "SELECT id, gtin, description, thumbnail, priceavg, pricemax, pricemin FROM products WHERE " +
-		"($1='' OR gtin=$1) AND" +
-		"($2='' OR description LIKE $2)"
-
-	var gtin, description string
-
-	if len(q) == 13 {
-		gtin = q
-	} else if len(q) > 0 {
-		description = q
-	}
+// Should return all Products that
+// Gtin = the numbers passed (if it is numbers)
+// OR Description has the string passed
+func QueryProducts(q string, tx *sqlx.Tx) ([]Product, error) {
+	query := "SELECT * FROM products WHERE " +
+		"(:gtin='' OR gtin=:gtin) OR" +
+		"(:description='' OR description LIKE :description)"
 
 	products := []Product{}
 
-	stmt, err := database.Prepare(query, tx)
+	stmt, err := db.PrepareNamed(query, tx)
 	if err != nil {
-		return products, err
+		return products, errors.Wrap(err, "preparing named query")
 	}
 
-	rows, err := stmt.Query(gtin, description)
+	// Search all products like this one
+	p := &Product{}
+
+	// If query just have numbers
+	// maybe user is asking for the Gtin number
+	_, err = strconv.Atoi(query)
 	if err != nil {
-		return products, err
+		p.Gtin = query
 	}
 
-	defer rows.Close()
+	p.Description = "%" + q + "%"
 
-	for rows.Next() {
-		p := Product{}
-		err = rows.Scan(&p.Id, &p.Gtin, &p.Description, &p.Thumbnail, &p.PriceAvg, &p.PriceMax, &p.PriceMin)
-		if err != nil {
-			return products, err
-		}
-		products = append(products, p)
-	}
-
-	err = rows.Err()
+	err = stmt.Select(&products, p)
 	if err != nil {
-		return products, err
+		return products, errors.Wrap(err, "selecting products")
 	}
 
-	fmt.Printf("Geted %d products with query %s\n", len(products), q)
-
+	// fmt.Printf("%d Products geted with query %s\n", len(products), q)
 	return products, nil
 }
