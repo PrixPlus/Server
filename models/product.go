@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 
 	"github.com/prixplus/server/errs"
 
@@ -142,8 +143,10 @@ func (p *Product) GetAll(tx *sqlx.Tx) ([]Product, error) {
 // OR Description has the string passed
 func QueryProducts(q string, tx *sqlx.Tx) ([]Product, error) {
 	query := "SELECT * FROM products WHERE " +
-		"(:gtin='' OR gtin=:gtin) OR" +
-		"(:description='' OR description LIKE :description)"
+		// Find if gtin does match
+		"(:gtin='' OR gtin=:gtin) AND" +
+		// If gtin doesn't match, see if description does match
+		"(gtin=:gtin OR :description='' OR description LIKE :description)"
 
 	products := []Product{}
 
@@ -157,18 +160,18 @@ func QueryProducts(q string, tx *sqlx.Tx) ([]Product, error) {
 
 	// If query just have numbers
 	// maybe user is asking for the Gtin number
-	_, err = strconv.Atoi(query)
-	if err != nil {
-		p.Gtin = query
+	_, err = strconv.Atoi(q)
+	if err == nil {
+		p.Gtin = q
 	}
 
-	p.Description = "%" + q + "%"
+	p.Description = "%" + strings.Replace(strings.TrimSpace(q), " ", "%", -1) + "%"
 
 	err = stmt.Select(&products, p)
 	if err != nil {
 		return products, errors.Wrap(err, "selecting products")
 	}
 
-	// fmt.Printf("%d Products geted with query %s\n", len(products), q)
+	//fmt.Printf("%d Products geted with query %s\n", len(products), q)
 	return products, nil
 }

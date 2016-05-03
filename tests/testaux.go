@@ -30,10 +30,12 @@ func DropTempTablesIfExist() error {
 
 // Inserting all test entities
 func InsertTestEntities() error {
-	for _, e := range testEntities {
-		err := e.Insert(nil)
-		if err != nil {
-			return errors.Wrapf(err, "inserting temporary entity: %#v", e)
+	for _, entities := range testEntities {
+		for _, e := range entities {
+			err := e.Insert(nil)
+			if err != nil {
+				return errors.Wrapf(err, "inserting temporary entity: %#v", e)
+			}
 		}
 	}
 	return nil

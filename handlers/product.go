@@ -18,7 +18,6 @@ func GetProductList() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		q := c.Query("q")
-		fmt.Println("QUERYYY:", q)
 
 		products, err := models.QueryProducts(q, nil) // Not using any transaction
 		if err != nil {
